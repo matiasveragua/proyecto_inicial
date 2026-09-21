@@ -5,3 +5,12 @@ db.sqlite3
 .DS_Store
 
 
+
+# Archivos específicos de Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Otras variantes de entornos virtuales
+.venv/
+env/
