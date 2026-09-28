@@ -1,0 +1,50 @@
+[
+{
+  "model": "reportes.categoria",
+  "pk": 1,
+  "fields": {
+    "nombre": "Bache o calzada rota",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 2,
+  "fields": {
+    "nombre": "Vereda dañada",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 3,
+  "fields": {
+    "nombre": "Semáforo o señalética",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 4,
+  "fields": {
+    "nombre": "Cable o poste",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 5,
+  "fields": {
+    "nombre": "Árbol con riesgo de caída",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 6,
+  "fields": {
+    "nombre": "Otro",
+    "gravedad_referencial": ""
+  }
+}
+]
