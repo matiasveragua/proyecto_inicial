@@ -13,3 +13,6 @@ env/
 
 # fotos subidas en desarrollo (cada uno tiene las suyas)
 media/
+
+#para ignorar un archivo de mi configuracion de mi ambiente virtual
+activate.bat
