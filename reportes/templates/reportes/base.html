@@ -2,19 +2,51 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name ="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Desperfectos RM</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+        --fondo-pantalla: #f6f5f1;   
+        --fondo-tarjeta: #ffffff;    
+        --texto-principal: #1b2430;  
+        --texto-secundario: #667085; 
+        --amarillo-vial: #ffc20e;    
+        --texto-sobre-amarillo: #1b2430;
+        }
+        @media (prefers-color-scheme: dark) {
+        :root {
+            --fondo-pantalla: #0e1217;
+            --fondo-tarjeta: #171c23;
+            --texto-principal: #f2f3f5;
+            --texto-secundario: #9aa1ad;
+        }
+        
+        .leaflet-layer,
+        .leaflet-control-zoom-in,
+        .leaflet-control-zoom-out,
+        .leaflet-control-attribution {
+            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+        }
+    }
+        *{
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--fondo-pantalla);
+            color: var(--texto-principal);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-primary">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Desperfectos RM</span>
-        </div>
-    </nav>
-    <div class="container mt-4">
-        {% block contenido %}
-
-        {% endblock contenido %}
-    </div>
+    {% block contenido %}
+    {% endblock contenido%}
 </body>
 </html>
+    
