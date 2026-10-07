@@ -1,8 +1,156 @@
 {% extends 'reportes/base.html'%}
 
 {% block contenido %}
-    <h2> hola</h2>
-    <p> aqui pronto instalaremos el mapa.</p>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    .mapa-fondo {
+        flex: 1;
+        position: relative;
+    }
 
-    <button class="btn btn-succcess btn-lg w-100">Reportar desperfectos</button>
+    .panel-inferior {
+        background-color: var(--fondo-pantalla);
+        border-radius: 26px 26px 0 0 ;
+        box-shadow: o -10px 30px rgba(0,0,0,0.5);
+        padding: 20px;
+        position: relative;
+        z-index: 10;
+        margin-top: -30px;
+    }
+    .boton-principal {
+        background-color: var(--amarillo-vial);
+        color: var(--texto-sobre-amarillo);
+        border: none;
+        width: 100%;
+        height: 52px;
+        border-radius: 16px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .boton-secundario {
+        background-color: transparent;
+        color: var(--amarillo-vial);
+        border: none;
+        width: 100%;
+        height: 44px;
+        font-size: 17px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+    .agarradera {
+        width: 38px;
+        height: 5px;
+        background-color: var(--texto-secundario);
+        border-radius: 3px;
+        margin: 0 auto 15px auto; 
+        opacity: 0.5;
+    }
+    .saludo-flotante {
+        position: absolute;
+        top: 52px;
+        left: 16px;
+        z-index: 1000;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 6px 14px 6px 6px;
+        border-radius: 20px;
+        background-color: rgba(23,28,35,0.84);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 6px 18px -8px rgba(0,0,0,0.3);
+    
+    }
+    .avatar-usuario {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background-color: var(--fondo-pantalla);
+        color: var(--amarillo-vial);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: bold;
+    }
+    .leyenda-estados {
+        display: flex;
+        gap: 14px;
+        font-size: 12.5px;
+        color: var(--texto-secundario);
+        margin-top: 5px;
+        margin-bottom: 20px;
+    }
+    .punto-estado {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+</style>
+<!-- Zona superior (El mapa) -->
+<div class="mapa-fondo">
+    
+    <!-- El lienzo donde Leaflet dibujará las calles reales -->
+    <div id="mi-mapa" style="width: 100%; height: 100%;"></div>
+    
+    <!-- Tu saludo flotante se mantiene intacto -->
+    <div class="saludo-flotante" style="position: absolute; top: 52px; left: 16px; z-index: 1000;">
+        <span class="avatar-usuario">M</span>
+        <b style="font-size: 15px;">Hola, Matías</b>
+    </div>
+
+</div>
+
+<!-- Zona inferior (El menú) -->
+<div class="panel-inferior">
+    <div class="agarradera"></div>
+    <h2 style="margin: 0; font-size: 22px;">Cerca de ti</h2>
+    
+    <!-- Aquí reemplazamos el "12" fijo por la variable de Django -->
+    <p style="color: var(--texto-secundario); font-size: 14px;">{{ cantidad_reportes|default:"0" }} reportes en tu zona esta semana</p>
+    <div class="leyenda-estados">
+        <span><i class="punto-estado" style="background-color: var(--amarillo-vial);"></i>Recibido</span>
+        <span><i class="punto-estado" style="background-color: #f08a24;"></i>En revisión</span>
+        <span><i class="punto-estado" style="background-color: #2fa66a;"></i>Resuelto</span>
+    </div>
+    <button class="boton-principal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Reportar desperfecto
+    </button>
+    
+    <!-- Botón fantasma -->
+    <button class="boton-secundario">Mis reportes</button>
+</div>
+<script>
+    // 1. Inicializar el mapa y centrarlo en Santiago (Latitud, Longitud, Nivel de Zoom)
+    var mapa = L.map('mi-mapa', {
+        zoomControl: false // Oculta los botones +/- para que parezca app nativa
+    }).setView([-33.4489, -70.6693], 14);
+
+    // 2. Cargar el diseño premium oscuro de las calles
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+    }).addTo(mapa);
+    // 4. Dibujar el punto azul de "Mi Ubicación"
+    L.circleMarker([-33.4489, -70.6693], {
+        color: '#ffffff',
+        weight: 3,
+        fillColor: '#3478f6',
+        fillOpacity: 1,
+        radius: 7
+    }).addTo(mapa);
+</script>
 {% endblock contenido %}
