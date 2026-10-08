@@ -1,50 +1,50 @@
-[
-{
-  "model": "reportes.categoria",
-  "pk": 1,
-  "fields": {
-    "nombre": "Bache o calzada rota",
-    "gravedad_referencial": ""
-  }
-},
-{
-  "model": "reportes.categoria",
-  "pk": 2,
-  "fields": {
-    "nombre": "Vereda daÒada",
-    "gravedad_referencial": ""
-  }
-},
-{
-  "model": "reportes.categoria",
-  "pk": 3,
-  "fields": {
-    "nombre": "Sem·foro o seÒalÈtica",
-    "gravedad_referencial": ""
-  }
-},
-{
-  "model": "reportes.categoria",
-  "pk": 4,
-  "fields": {
-    "nombre": "Cable o poste",
-    "gravedad_referencial": ""
-  }
-},
-{
-  "model": "reportes.categoria",
-  "pk": 5,
-  "fields": {
-    "nombre": "¡rbol con riesgo de caÌda",
-    "gravedad_referencial": ""
-  }
-},
-{
-  "model": "reportes.categoria",
-  "pk": 6,
-  "fields": {
-    "nombre": "Otro",
-    "gravedad_referencial": ""
-  }
-}
-]
+[
+{
+  "model": "reportes.categoria",
+  "pk": 1,
+  "fields": {
+    "nombre": "Bache o calzada rota",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 2,
+  "fields": {
+    "nombre": "Vereda da√±ada",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 3,
+  "fields": {
+    "nombre": "Sem√°foro o se√±al√©tica",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 4,
+  "fields": {
+    "nombre": "Cable o poste",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 5,
+  "fields": {
+    "nombre": "√Årbol con riesgo de ca√≠da",
+    "gravedad_referencial": ""
+  }
+},
+{
+  "model": "reportes.categoria",
+  "pk": 6,
+  "fields": {
+    "nombre": "Otro",
+    "gravedad_referencial": ""
+  }
+}
+]

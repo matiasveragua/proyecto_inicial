@@ -129,3 +129,7 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# A donde se va el usuario despues de iniciar o cerrar sesion.
+LOGIN_REDIRECT_URL = '/reportar/'
+LOGOUT_REDIRECT_URL = '/'

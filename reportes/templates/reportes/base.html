@@ -45,6 +45,15 @@
     </style>
 </head>
 <body>
+    {# Avisos cortos: "Tu reporte quedo registrado", errores de login, etc. #}
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 13px 18px; background-color: var(--amarillo-vial);
+                        color: var(--texto-sobre-amarillo); font-size: 15px;
+                        text-align: center;">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
     {% block contenido %}
     {% endblock contenido%}
 </body>
