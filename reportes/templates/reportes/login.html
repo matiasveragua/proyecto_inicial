@@ -1,0 +1,109 @@
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+
+<style>
+    /* Este es el diseño de la parte superior del login */
+
+    .hero { background: #1b2430; color: #fff; position: relative; height: 262px; flex: none; display: flex; flex-direction: column; }
+    .hero .inner { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-bottom: 20px; text-align: center; }
+    .hero .inner b { font-size: 27px; font-weight: 800; letter-spacing: -.035em; }
+    .hero .inner b i { font-style: normal; color: var(--amarillo-vial); }
+    .hero .inner span { font-size: 14px; color: rgba(255,255,255,.7); }
+    .hero .road { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; width: 100% }
+
+    /* Este es el diseño del formulario */
+    .login { flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 22px 16px 34px; }
+    .login h2 { margin: 0 0 2px 4px; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+
+    /* Diseño de las cajas de texto */
+
+    .group { background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,.04); }
+    .row { padding: 10px 16px; display: flex; flex-direction: column; gap: 1px; position: relative; }
+    .row + .row::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--texto-secundario); opacity: 0.2; }
+    .row .k { font-size: 12px; color: var(--texto-secundario); }
+    .row .v { font-size: 16px; color: var(--texto-principal); }
+
+    /* Diseño de los botones */
+
+    .stack { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+    .btn { appearance: none; border: 0; font-size: 17px; font-weight: 700; height: 52px; border-radius: 16px; width: 100%; cursor: pointer; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); }
+    .btn.plain { background: transparent; color: var(--texto-principal); height: 44px; }
+
+    /* Diseño del mensaje bajo los botones */
+
+    .sp { flex: 1; }
+    .foot { margin: 0; text-align: center; font-size: 12.5px; color: var(--texto-secundario); padding-inline: 14px; }
+
+</style>
+
+<!-- parte superior -->
+
+<div class="hero">
+
+    <div class="inner">
+
+        <svg class="mark" viewBox="0 0 120 120" style="width: 68px; height: 68px; margin-bottom: 8px;">
+            <rect width="120" height="120" rx="27" fill="#1b2430"/>
+            <path d="M-4 96 Q60 76 124 96" stroke="#ffc20e" stroke-width="5" stroke-dasharray="14 10" stroke-linecap="round" fill="none" opacity=".9"/>
+            <ellipse cx="60" cy="87" rx="17" ry="5.2" fill="#000" opacity=".35"/>
+            <path d="M60 18c-14.4 0-26 11.1-26 25.2C34 60.8 60 85 60 85s26-24.2 26-41.8C86 29.1 74.4 18 60 18z" fill="#ffc20e"/>
+            <path d="M52 36l6 9-5 5 8 10" stroke="#1b2430" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="68" cy="38" r="3.4" fill="#1b2430"/>
+        </svg>
+
+        <b>Desperfectos<i> RM</i></b>
+        <span>Tu barrio, mejor. Reporta en un minuto.</span>
+    </div>
+
+    <svg class="road" viewBox="0 0 300 16" preserveAspectRatio="none"><path d="M0 8H300" stroke="#ffc20e" stroke-width="3" stroke-dasharray="16 12" opacity=".85"/></svg>
+
+</div>
+
+<!-- formulario -->
+
+<div class="login">
+    <h2>Iniciar sesión</h2>
+
+    <from method="POST" action="">
+        <!-- para back end: agregar el token CSRF de Django aquí -->
+        
+        <div class="group">
+
+            <!-- correo -->
+            
+            <div class="row">
+
+                <label class="k">Correo electrónico</label>
+                <input class="v" type="email" name="correo" placeholder="ejemplo@correo.cl" required style="border:none; outline:none; background:transparent; width:100%; font-family: inherit;">
+                
+            </div>
+
+            <!-- contraseña -->
+
+            <div class="row">
+                <label class="k">Contraseña</label>
+                <input class="v" type="password" name="contrasena" placeholder="••••••••" required style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; letter-spacing: .12em; color: inherit;">
+            </div>
+
+        </div>
+
+        <div class="stack" style="margin-top: 14px;">
+
+            <!-- boton para subir los datos -->
+            
+            <button class="btn" type="submit">Entrar</button>
+            <button class="btn plain" type="button">Crear una cuenta</button>
+
+        </div>
+
+    </from>
+
+    <!-- mensaje bajo los botones  -->
+
+    <div class="sp"></div>
+    <p class="foot">Se necesita cuenta porque cada reporte queda asociado a su autor.</p>
+
+</div>
+
+{% endblock contenido %}

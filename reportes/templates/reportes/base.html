@@ -12,6 +12,7 @@
         --texto-secundario: #667085; 
         --amarillo-vial: #ffc20e;    
         --texto-sobre-amarillo: #1b2430;
+        --color-boton-secundario: var(--texto-principal);
         }
         @media (prefers-color-scheme: dark) {
         :root {
@@ -19,6 +20,7 @@
             --fondo-tarjeta: #171c23;
             --texto-principal: #f2f3f5;
             --texto-secundario: #9aa1ad;
+            --color-boton-secundario: var(--amarillo-vial);
         }
         
         .leaflet-layer,
@@ -27,7 +29,7 @@
         .leaflet-control-attribution {
             filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
         }
-    }
+        }
         *{
             box-sizing: border-box;
         }
