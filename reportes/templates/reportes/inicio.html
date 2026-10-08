@@ -4,12 +4,12 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-    .mapa-fondo {
+    .back-map {
         flex: 1;
         position: relative;
     }
 
-    .panel-inferior {
+    .inferior-panel {
         background-color: var(--fondo-pantalla);
         border-radius: 26px 26px 0 0 ;
         box-shadow: o -10px 30px rgba(0,0,0,0.5);
@@ -18,7 +18,7 @@
         z-index: 2000;
         margin-top: -30px;
     }
-    .boton-principal {
+    .principal-btn {
         background-color: var(--amarillo-vial);
         color: var(--texto-sobre-amarillo);
         border: none;
@@ -34,9 +34,9 @@
         justify-content: center;
         gap: 8px;
     }
-    .boton-secundario {
+    .sec-btn {
         background-color: transparent;
-        color: var(--color-boton-secundario);
+        color: var(--color-sec-btn);
         border: none;
         width: 100%;
         height: 44px;
@@ -45,7 +45,7 @@
         cursor: pointer;
         margin-top: 8px;
     }
-    .agarradera {
+    .catch-line {
         width: 38px;
         height: 5px;
         background-color: var(--texto-secundario);
@@ -53,7 +53,7 @@
         margin: 0 auto 15px auto; 
         opacity: 0.5;
     }
-    .saludo-flotante {
+    .float-txt {
         position: absolute;
         top: 52px;
         left: 16px;
@@ -70,7 +70,7 @@
         box-shadow: 0 6px 18px -8px rgba(0,0,0,0.3);
     
     }
-    .avatar-usuario {
+    .user-avatar {
         width: 28px;
         height: 28px;
         border-radius: 50%;
@@ -82,7 +82,7 @@
         font-size: 13px;
         font-weight: bold;
     }
-    .leyenda-estados {
+    .status-txt {
         display: flex;
         gap: 14px;
         font-size: 12.5px;
@@ -90,7 +90,7 @@
         margin-top: 5px;
         margin-bottom: 20px;
     }
-    .punto-estado {
+    .status-light {
         display: inline-block;
         width: 9px;
         height: 9px;
@@ -100,32 +100,32 @@
 
 </style>
 <!-- Zona superior (El mapa) -->
-<div class="mapa-fondo">
+<div class="back-map">
     
     <!-- El lienzo donde Leaflet dibujará las calles reales -->
     <div id="mi-mapa" style="width: 100%; height: 100%;"></div>
     
     <!-- Tu saludo flotante se mantiene intacto -->
-    <div class="saludo-flotante" style="position: absolute; top: 52px; left: 16px; z-index: 1000;">
-        <span class="avatar-usuario">M</span>
+    <div class="float-txt" style="position: absolute; top: 52px; left: 16px; z-index: 1000;">
+        <span class="user-avatar">M</span>
         <b style="font-size: 15px;">Hola, Matías</b>
     </div>
 
 </div>
 
 <!-- Zona inferior (El menú) -->
-<div class="panel-inferior">
-    <div class="agarradera"></div>
+<div class="inferior-panel">
+    <div class="catch-line"></div>
     <h2 style="margin: 0; font-size: 22px;">Cerca de ti</h2>
     
     <!-- Aquí reemplazamos el "12" fijo por la variable de Django -->
     <p style="color: var(--texto-secundario); font-size: 14px;">{{ cantidad_reportes|default:"0" }} reportes en tu zona esta semana</p>
-    <div class="leyenda-estados">
-        <span><i class="punto-estado" style="background-color: var(--amarillo-vial);"></i>Recibido</span>
-        <span><i class="punto-estado" style="background-color: #f08a24;"></i>En revisión</span>
-        <span><i class="punto-estado" style="background-color: #2fa66a;"></i>Resuelto</span>
+    <div class="status-txt">
+        <span><i class="status-light" style="background-color: var(--amarillo-vial);"></i>Recibido</span>
+        <span><i class="status-light" style="background-color: #f08a24;"></i>En revisión</span>
+        <span><i class="status-light" style="background-color: #2fa66a;"></i>Resuelto</span>
     </div>
-    <button class="boton-principal">
+    <button class="principal-btn">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
             <path d="M12 5v14M5 12h14"/>
         </svg>
@@ -133,7 +133,7 @@
     </button>
     
     <!-- Botón fantasma -->
-    <button class="boton-secundario">Mis reportes</button>
+    <button class="sec-btn">Mis reportes</button>
 </div>
 <script>
     // 1. Inicializar el mapa y centrarlo en Santiago (Latitud, Longitud, Nivel de Zoom)
