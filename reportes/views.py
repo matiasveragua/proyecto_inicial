@@ -5,3 +5,6 @@ def inicio(request):
 
 def login(request):
     return render(request, 'reportes/login.html')
+
+def ubicacion(request):
+    return render(request, 'reportes/ubicacion.html')

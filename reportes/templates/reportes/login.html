@@ -35,6 +35,12 @@
     .sp { flex: 1; }
     .foot { margin: 0; text-align: center; font-size: 12.5px; color: var(--texto-secundario); padding-inline: 14px; }
 
+    /* Ocultado de vista de contraseña predeterminada de algunos navegadores */
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+        display: none;
+    }
+
 </style>
 
 <!-- parte superior -->
@@ -83,9 +89,19 @@
 
             <div class="row">
                 <label class="k">Contraseña</label>
-                <input class="v" type="password" name="contrasena" placeholder="••••••••" required style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; letter-spacing: .12em; color: inherit;">
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <input class="v" id="campoContrasena" type="password" name="contrasena" placeholder="••••••••" required style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; letter-spacing: .12em; color: inherit;">
+                    
+                    <!-- Botón del ojo -->
+                    
+                    <button type="button" id="btnOjo" style="background:transparent; border:none; color:var(--texto-secundario); cursor:pointer; padding:0; margin-top: 2px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
             </div>
-
         </div>
 
         <div class="stack" style="margin-top: 14px;">
@@ -105,5 +121,22 @@
     <p class="foot">Se necesita cuenta porque cada reporte queda asociado a su autor.</p>
 
 </div>
+
+<!-- para que el boton del ojo funcione -->
+
+<script>
+    const campoContrasena = document.getElementById('campoContrasena');
+    const btnOjo = document.getElementById('btnOjo');
+
+    btnOjo.addEventListener('click', function() {
+        if (campoContrasena.type == 'password') {
+            campoContrasena.type = 'text';
+            campoContrasena.style.letterSpacing = 'normal';
+        } else {
+            campoContrasena.type = 'password';
+            campoContrasena.style.letterSpacing = '.12em';
+        }
+    });
+</script>
 
 {% endblock contenido %}
