@@ -1,0 +1,183 @@
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+
+<style>
+
+    /* diseño de la pantalla de ubicacion */
+
+    .top-bar {flex: none; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .top-bar .line { display: flex; align-items: center; justify-content: space-between; height: 30px; }
+
+    /* boton para debolverse */
+
+    .back { display: inline-flex; align-items: center; gap: 2px; font-size: 16px; color: #8f6200; font-weight: 600; margin-left: -4px; text-decoration: none; }
+    .back svg { width: 12px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* barra de progreso */
+
+    .stepno { font-size: 12.5px; color: var(--texto-secundario); font-weight: 600; }
+    .prog { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .prog i { height: 4px; border-radius: 2px; background: rgba(27, 36, 48, .07); }
+    .prog i.on { background: var(--amarillo-vial); }
+    
+    .large { margin: 8px 0 0 0; font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.12; color: var(--texto-principal); }
+    
+    .pbody { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 34px; }
+
+    /* mapa */
+
+    .map { position: relative; border-radius: 16px; overflow: hidden; background: #eceae3; flex: none; height: 196px; width: 100%; }
+    .map svg.bg { width: 100%; height: 100%; display: block; }
+
+    /* pin sobre el mapa */
+
+    .pin { position: absolute; width: 34px; height: 44px; transform: translate(-50%, -100%); filter: drop-shadow(0 4px 4px rgba(0,0,0,.3)); }
+    .pin svg { width: 100%; height: 100%; display: block; }
+
+    /* texto informativo en el mismo mapa */
+
+    .hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); white-space: nowrap; font-size: 12.5px; padding: 6px 14px; border-radius: 14px; background: var(--fondo-tarjeta); color: var(--texto-principal); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    /* caja donde va la direccion */
+
+    .group { background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(27,36,48,.04); }
+    .row { padding: 10px 16px; display: flex; flex-direction: column; gap: 1px; position: relative; min-width: 0; }
+    .row .k { font-size: 12px; color: var(--texto-secundario); }
+    .row .v { font-size: 16px; color: var(--texto-principal); }
+
+    /* botones */
+
+    .sp { flex: 1; }
+    .stack { display: flex; flex-direction: column; gap: 8px; }
+    .btn { appearance: none; border: 0; font-size: 17px; font-weight: 700; height: 52px; border-radius: 16px; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--amarillo-vial); color: #1b2430; }
+    .btn.ghost { background: rgba(27, 36, 48, .07); color: var(--texto-principal); font-weight: 600; }
+    .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+</style>
+
+<!-- barra superior y el progreso -->
+
+<div class="top-bar">
+    <div class="line">
+
+        <a href="{% url 'inicio' %}" class="back">
+            <svg viewBox="0 0 12 20"><path d="M10 2 2 10l8 8"/></svg>Inicio
+        </a>
+
+        <span class="stepno">Paso 1 de 3</span>
+
+    </div>
+
+    <div class="prog"><i class="on"></i><i></i><i></i></div>
+    <h1 class="large">¿Dónde está el desperfecto?</h1>
+
+</div>
+
+<!-- todo lo demas -->
+
+<div class="pbody">
+    
+    <!-- mapa -->
+    
+    <div class="map">
+
+        <!-- fondo del mapa -->
+        
+        <svg class="bg" viewBox="0 0 300 380" preserveAspectRatio="xMidYMid slice">
+
+            <rect width="300" height="380" fill="#eceae3"/>
+            <g fill="#e2dfd5">
+
+                <rect x="12" y="12" width="64" height="62" rx="3"/><rect x="92" y="12" width="46" height="62" rx="3"/><rect x="178" y="12" width="52" height="62" rx="3"/><rect x="246" y="12" width="50" height="62" rx="3"/>
+                <rect x="12" y="90" width="64" height="70" rx="3"/><rect x="92" y="90" width="46" height="70" rx="3"/><rect x="178" y="90" width="52" height="70" rx="3"/><rect x="246" y="90" width="50" height="70" rx="3"/>
+                <rect x="12" y="176" width="64" height="70" rx="3"/><rect x="178" y="176" width="52" height="70" rx="3"/><rect x="246" y="176" width="50" height="70" rx="3"/>
+                <rect x="12" y="262" width="64" height="60" rx="3"/><rect x="92" y="262" width="46" height="60" rx="3"/><rect x="178" y="262" width="52" height="60" rx="3"/><rect x="246" y="262" width="50" height="60" rx="3"/>
+
+            </g>
+
+            <rect x="92" y="176" width="46" height="70" rx="8" fill="#cfe3c2"/>
+            <path d="M0 338 C60 316 120 360 180 334 S270 308 300 322 L300 380 L0 380 Z" fill="#bcd9ec"/>
+
+            <g stroke="#ffffff" stroke-width="7" fill="none" stroke-linecap="round">
+
+                <path d="M0 82 H300"/><path d="M0 168 H300"/><path d="M0 254 H300"/><path d="M84 0 V380"/><path d="M146 0 V380"/><path d="M238 0 V380"/>
+
+            </g>
+
+            <path d="M-10 40 L310 214" stroke="#d1ccbe" stroke-width="13" fill="none"/>
+            <path d="M-10 40 L310 214" stroke="#fbd983" stroke-width="10" fill="none"/>
+        
+        </svg>
+        
+        <!-- pin -->
+        <span class="pin" style="left:50%;top:52%">
+
+            <svg viewBox="0 0 34 44" style="overflow: visible;">
+
+                <path d="M17 0C7.6 0 0 7.3 0 16.5 0 28 17 44 17 44s17-16 17-27.5C34 7.3 26.4 0 17 0z" fill="#ffc20e" stroke="#1b2430" stroke-width="2.5"/>
+                <path d="M12.5 11l4.5 7-3.6 3.6 6 7.4" stroke="#1b2430" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+            </svg>
+        </span>
+
+        <span class="hint">Toca el mapa para fijar el punto</span>
+
+    </div>
+    
+    <form method="POST" action="">
+
+        <!-- no olvidar el token de seguridad o Django tirará error 403 -->
+        
+        {% csrf_token %}
+
+        <!-- direccion ingresada -->
+        
+        <div class="group" style="margin-top: 12px;">
+
+            <div class="row">
+
+                <span class="k">Dirección o referencia</span>
+
+                <!-- le agregue el atributo name="direccion" para que lo capturen en views.py -->
+                
+                <input class="v" type="text" name="direccion" placeholder="Ej: Av. Vicuña Mackenna 3900" required style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; color: inherit;">
+
+            </div>
+        </div>
+        
+        <!-- inputs ocultos para guardar las coordenadas al usar el JS -->
+        
+        <input type="hidden" name="latitud" id="lat">
+        <input type="hidden" name="longitud" id="lon">
+
+        <!-- espaciador para empujar los botones al fondo -->
+        
+        <div class="sp"></div>
+        
+        <!-- botones de accion -->
+        
+        <div class="stack">
+
+            <!-- le agregue el id="btnUbicacion" para que lo conecten con su script de geolocalizacion -->
+            
+            <button class="btn ghost" type="button" id="btnUbicacion">
+
+                <svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none">
+
+                    <path d="M3.4 11.1 20 3.9c.8-.3 1.5.4 1.2 1.2l-7.2 16.6c-.4.9-1.7.8-1.9-.1l-1.4-5.8a1 1 0 0 0-.7-.7l-5.8-1.4c-.9-.2-1-1.5-.1-1.9z"/>
+
+                </svg>
+                Usar mi ubicación actual
+            </button>
+            
+            <!-- OJO, cambie type="button" a type="submit" para que envie los datos a Django -->
+            <button class="btn" type="submit">Continuar</button>
+        </div>
+    </form>
+
+</div>
+
+<!-- abran una etiqueta <script> aquí abajo para meter la lógica de navigator.geolocation -->
+
+{% endblock contenido %}

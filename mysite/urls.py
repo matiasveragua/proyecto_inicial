@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('inicio/', views.inicio, name='inicio'),
     path('login/', views.login, name= 'login'),
+    path('ubicacion/', views.ubicacion, name= 'ubicacion'),
 ]
 
 # En desarrollo, servir las fotos subidas desde /media/
