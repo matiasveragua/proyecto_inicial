@@ -142,7 +142,8 @@
 
     // 2. Cargar el diseño premium oscuro de las calles
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-
+        attribution: '&copy; OpenStreetMap contributors',
+        referrerPolicy: 'strict-origin-when-cross-origin'
     }).addTo(mapa);
     // 4. Dibujar el punto azul de "Mi Ubicación"
     L.circleMarker([-33.4489, -70.6693], {
