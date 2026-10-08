@@ -110,7 +110,22 @@
     <div class="encabezado">
         <a href="{% url 'inicio' %}" title="Volver">&larr;</a>
         <h1>Mis reportes</h1>
+
+        {# Django exige POST para cerrar sesion, por eso es un formulario
+           y no un simple enlace. #}
+        <form method="post" action="{% url 'logout' %}" style="margin-left: auto;">
+            {% csrf_token %}
+            <button type="submit"
+                    style="background: none; border: none; cursor: pointer; padding: 0;
+                           color: var(--texto-secundario); font-size: 13px; font-family: inherit;">
+                Cerrar sesión
+            </button>
+        </form>
     </div>
+
+    <p style="color: var(--texto-secundario); font-size: 13px; margin: -8px 0 16px 0;">
+        Conectado como {{ user.username }}
+    </p>
 
     {% for reporte in reportes %}
         <div class="tarjeta">

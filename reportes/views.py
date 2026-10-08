@@ -1,8 +1,9 @@
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .forms import ReporteForm, UbicacionForm
+from .forms import RegistroForm, ReporteForm, UbicacionForm
 from .models import Reporte
 
 # Centro de Santiago. Es el punto por defecto mientras el mapa no entregue
@@ -13,6 +14,26 @@ LON_POR_DEFECTO = -70.6693
 
 def inicio(request):
     return render(request, 'reportes/inicio.html')
+
+
+def registro(request):
+    # Si ya tiene sesion iniciada no tiene sentido mostrarle el registro.
+    if request.user.is_authenticated:
+        return redirect("reportar")
+
+    if request.method == "POST":
+        form = RegistroForm(request.POST)
+        if form.is_valid():
+            usuario = form.save()
+            # Lo dejamos adentro al tiro, para que no tenga que escribir
+            # la clave de nuevo justo despues de crearla.
+            login(request, usuario)
+            messages.success(request, "Tu cuenta quedó creada.")
+            return redirect("reportar")
+    else:
+        form = RegistroForm()
+
+    return render(request, "registration/registro.html", {"form": form})
 
 
 @login_required

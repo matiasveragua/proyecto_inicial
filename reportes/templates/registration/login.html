@@ -1,84 +1,128 @@
 {% extends 'reportes/base.html' %}
 
 {% block contenido %}
+
 <style>
-    .hoja {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    .hoja h1 {
-        font-size: 22px;
-        margin: 0 0 4px 0;
-    }
-    .bajada {
-        color: var(--texto-secundario);
-        font-size: 14px;
-        margin: 0 0 22px 0;
-    }
-    .campo {
-        margin-bottom: 16px;
-    }
-    .campo label {
-        display: block;
-        font-size: 14px;
-        color: var(--texto-secundario);
-        margin-bottom: 6px;
-    }
-    .campo input {
-        width: 100%;
-        padding: 13px 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(128, 128, 128, 0.3);
-        background-color: var(--fondo-tarjeta);
-        color: var(--texto-principal);
-        font-size: 16px;
-        font-family: inherit;
-    }
-    .error {
-        color: #d93025;
-        font-size: 13px;
-        margin-top: 5px;
-    }
-    .boton-principal {
-        background-color: var(--amarillo-vial);
-        color: var(--texto-sobre-amarillo);
-        border: none;
-        width: 100%;
-        height: 52px;
-        border-radius: 16px;
-        font-size: 17px;
-        font-weight: bold;
-        cursor: pointer;
-        margin-top: 8px;
-    }
+    /* Este es el diseño de la parte superior del login */
+
+    .hero { background: #1b2430; color: #fff; position: relative; height: 262px; flex: none; display: flex; flex-direction: column; }
+    .hero .inner { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-bottom: 20px; text-align: center; }
+    .hero .inner b { font-size: 27px; font-weight: 800; letter-spacing: -.035em; }
+    .hero .inner b i { font-style: normal; color: var(--amarillo-vial); }
+    .hero .inner span { font-size: 14px; color: rgba(255,255,255,.7); }
+    .hero .road { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; width: 100% }
+
+    /* Este es el diseño del formulario */
+    .login { flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 22px 16px 34px; overflow-y: auto; }
+    .login h2 { margin: 0 0 2px 4px; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+
+    /* Diseño de las cajas de texto */
+
+    .group { background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,.04); }
+    .row { padding: 10px 16px; display: flex; flex-direction: column; gap: 1px; position: relative; }
+    .row + .row::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--texto-secundario); opacity: 0.2; }
+    .row .k { font-size: 12px; color: var(--texto-secundario); }
+    .row .v { font-size: 16px; color: var(--texto-principal); }
+
+    /* Diseño de los botones */
+
+    .stack { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+    .btn { appearance: none; border: 0; font-size: 17px; font-weight: 700; height: 52px; border-radius: 16px; width: 100%; cursor: pointer; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); }
+    .btn.plain { background: transparent; color: var(--texto-principal); height: 44px; }
+
+    /* Diseño del mensaje bajo los botones */
+
+    .sp { flex: 1; }
+    .foot { margin: 0; text-align: center; font-size: 12.5px; color: var(--texto-secundario); padding-inline: 14px; }
+
+    /* Aviso cuando la clave o el usuario estan malos */
+
+    .aviso { background: rgba(217, 48, 37, .12); color: #d93025; border-radius: 12px; padding: 11px 14px; font-size: 13.5px; margin: 0; }
 </style>
 
-<div class="hoja">
-    <h1>Iniciar sesión</h1>
-    <p class="bajada">Necesitas una cuenta para poder reportar.</p>
+<!-- parte superior -->
 
-    <form method="post">
+<div class="hero">
+
+    <div class="inner">
+
+        <svg class="mark" viewBox="0 0 120 120" style="width: 68px; height: 68px; margin-bottom: 8px;">
+            <rect width="120" height="120" rx="27" fill="#1b2430"/>
+            <path d="M-4 96 Q60 76 124 96" stroke="#ffc20e" stroke-width="5" stroke-dasharray="14 10" stroke-linecap="round" fill="none" opacity=".9"/>
+            <ellipse cx="60" cy="87" rx="17" ry="5.2" fill="#000" opacity=".35"/>
+            <path d="M60 18c-14.4 0-26 11.1-26 25.2C34 60.8 60 85 60 85s26-24.2 26-41.8C86 29.1 74.4 18 60 18z" fill="#ffc20e"/>
+            <path d="M52 36l6 9-5 5 8 10" stroke="#1b2430" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="68" cy="38" r="3.4" fill="#1b2430"/>
+        </svg>
+
+        <b>Desperfectos<i> RM</i></b>
+        <span>Tu barrio, mejor. Reporta en un minuto.</span>
+    </div>
+
+    <svg class="road" viewBox="0 0 300 16" preserveAspectRatio="none"><path d="M0 8H300" stroke="#ffc20e" stroke-width="3" stroke-dasharray="16 12" opacity=".85"/></svg>
+
+</div>
+
+<!-- formulario -->
+
+<div class="login">
+    <h2>Iniciar sesión</h2>
+
+    {# Si el usuario o la clave estan malos, Django lo deja en non_field_errors #}
+    {% for error in form.non_field_errors %}
+        <p class="aviso">{{ error }}</p>
+    {% endfor %}
+
+    <form method="POST" action="">
+        {# El token CSRF que faltaba. Django rechaza el POST sin el. #}
         {% csrf_token %}
 
-        {% for campo in form %}
-            <div class="campo">
-                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-                {{ campo }}
-                {% for error in campo.errors %}
-                    <p class="error">{{ error }}</p>
-                {% endfor %}
+        {# Si llegaste aqui porque intentabas entrar a otra pagina, esto te
+           devuelve a esa pagina despues de iniciar sesion. #}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="group">
+
+            <!-- correo -->
+
+            <div class="row">
+
+                <label class="k" for="id_username">Correo electrónico</label>
+                <input class="v" type="text" name="username" id="id_username"
+                       value="{{ form.username.value|default:'' }}"
+                       placeholder="ejemplo@correo.cl" required autofocus
+                       style="border:none; outline:none; background:transparent; width:100%; font-family: inherit;">
+
             </div>
-        {% endfor %}
 
-        {% for error in form.non_field_errors %}
-            <p class="error">{{ error }}</p>
-        {% endfor %}
+            <!-- contraseña -->
 
-        <button type="submit" class="boton-principal">Entrar</button>
+            <div class="row">
+                <label class="k" for="id_password">Contraseña</label>
+                <input class="v" type="password" name="password" id="id_password"
+                       placeholder="••••••••" required
+                       style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; letter-spacing: .12em; color: inherit;">
+            </div>
+
+        </div>
+
+        <div class="stack" style="margin-top: 14px;">
+
+            <!-- boton para subir los datos -->
+
+            <button class="btn" type="submit">Entrar</button>
+            <a class="btn plain" href="{% url 'registro' %}"
+               style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Crear una cuenta</a>
+
+        </div>
+
     </form>
+
+    <!-- mensaje bajo los botones  -->
+
+    <div class="sp"></div>
+    <p class="foot">Se necesita cuenta porque cada reporte queda asociado a su autor.</p>
+
 </div>
+
 {% endblock contenido %}
