@@ -124,12 +124,12 @@
         <span><i class="punto-estado" style="background-color: #f08a24;"></i>En revisión</span>
         <span><i class="punto-estado" style="background-color: #2fa66a;"></i>Resuelto</span>
     </div>
-    <button class="boton-principal">
+    <a href="{% url 'reportar' %}" class="boton-principal" style="text-decoration: none;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
             <path d="M12 5v14M5 12h14"/>
         </svg>
         Reportar desperfecto
-    </button>
+    </a>
     
     <!-- Botón fantasma -->
     <button class="boton-secundario">Mis reportes</button>

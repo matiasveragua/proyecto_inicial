@@ -1,0 +1,107 @@
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+<style>
+    .hoja {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+    .encabezado {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .encabezado a {
+        color: var(--texto-secundario);
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+    }
+    .encabezado h1 {
+        font-size: 20px;
+        margin: 0;
+    }
+    .campo {
+        margin-bottom: 16px;
+    }
+    .campo label {
+        display: block;
+        font-size: 14px;
+        color: var(--texto-secundario);
+        margin-bottom: 6px;
+    }
+    .campo input[type="text"],
+    .campo input[type="file"],
+    .campo select,
+    .campo textarea {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(128, 128, 128, 0.3);
+        background-color: var(--fondo-tarjeta);
+        color: var(--texto-principal);
+        font-size: 16px;
+        font-family: inherit;
+    }
+    .campo textarea {
+        resize: vertical;
+    }
+    .error {
+        color: #d93025;
+        font-size: 13px;
+        margin-top: 5px;
+    }
+    .boton-principal {
+        background-color: var(--amarillo-vial);
+        color: var(--texto-sobre-amarillo);
+        border: none;
+        width: 100%;
+        height: 52px;
+        border-radius: 16px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+</style>
+
+<div class="hoja">
+    <div class="encabezado">
+        <a href="{% url 'inicio' %}" title="Volver">&larr;</a>
+        <h1>Reportar desperfecto</h1>
+    </div>
+
+    {# enctype es obligatorio para que viaje la foto #}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for campo in form_reporte %}
+            <div class="campo">
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                {{ campo }}
+                {% for error in campo.errors %}
+                    <p class="error">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        {% for campo in form_ubicacion %}
+            {% if campo.is_hidden %}
+                {{ campo }}
+            {% else %}
+                <div class="campo">
+                    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                    {{ campo }}
+                    {% for error in campo.errors %}
+                        <p class="error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <button type="submit" class="boton-principal">Enviar reporte</button>
+    </form>
+</div>
+{% endblock contenido %}
