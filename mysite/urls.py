@@ -22,7 +22,8 @@ from reportes import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.inicio, name='inicio'),
+    path('inicio/', views.inicio, name='inicio'),
+    path('login/', views.login, name= 'login'),
 ]
 
 # En desarrollo, servir las fotos subidas desde /media/
