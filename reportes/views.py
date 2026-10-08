@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from .forms import ReporteForm, UbicacionForm
+from .models import Reporte
 
 # Centro de Santiago. Es el punto por defecto mientras el mapa no entregue
 # la coordenada real donde el usuario marco el desperfecto.
@@ -47,3 +48,17 @@ def reportar(request):
         "form_reporte": form_reporte,
     }
     return render(request, "reportes/reportar.html", contexto)
+
+
+@login_required
+def mis_reportes(request):
+    # Solo los reportes del usuario que inicio sesion, del mas nuevo al mas viejo.
+    # select_related trae la categoria y la ubicacion en la misma consulta,
+    # para no pegarle a la base una vez por cada fila de la lista.
+    reportes = (
+        Reporte.objects
+        .filter(creador=request.user)
+        .select_related("categoria", "ubicacion")
+        .order_by("-fecha_creacion")
+    )
+    return render(request, "reportes/mis_reportes.html", {"reportes": reportes})

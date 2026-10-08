@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.inicio, name='inicio'),
     path('reportar/', views.reportar, name='reportar'),
+    path('mis-reportes/', views.mis_reportes, name='mis_reportes'),
     # Trae gratis /accounts/login/ y /accounts/logout/ de Django.
     path('accounts/', include('django.contrib.auth.urls')),
 ]
