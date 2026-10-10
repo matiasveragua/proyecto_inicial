@@ -8,16 +8,25 @@
         flex: 1;
         position: relative;
     }
-
     .inferior-panel {
         background-color: var(--fondo-pantalla);
         border-radius: 26px 26px 0 0 ;
-        box-shadow: o -10px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.5); 
         padding: 20px;
         position: relative;
         z-index: 2000;
         margin-top: -30px;
+        transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    }    
+    .inferior-panel:not(.expanded-panel) .catch-line {
+        animation: jump 3.2s ease-in-out infinite;
     }
+    @keyframes jump {
+        0%, 70%, 100% { transform: translateY(0); }
+        80% { transform: translateY(-4px); } 
+        90% { transform: translateY(0); }
+    }
+    
     .principal-btn {
         background-color: var(--amarillo-vial);
         color: var(--texto-sobre-amarillo);
@@ -97,6 +106,70 @@
         border-radius: 50%;
         margin-right: 5px;
     }
+    .expanded-panel {
+        top: 108px;
+        height: auto;
+        padding-bottom: 20px;
+    }
+    .content-hidden {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        margin-top: 15px;
+        margin-top: 10px;
+    }
+    /* Cuando se expanda la barra, se oculta el txt q habia y 
+    muestra el contenido nuevo */
+    .expanded-panel .status-txt {display: none;}
+    .expanded-panel .content-hidden {display: flex;}
+    /* Estilos de los filtros y lista */
+    .chips {
+        display: flex;
+        gap: 8px;
+        flex: none;
+        margin-bottom: 16px;
+    }
+    .fchip {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 16px;
+        background: var(--fondo-pantalla);
+        color: var(--texto-secundario);
+        cursor: pointer;
+    }
+    .fchip.on {
+        background: var(--texto-principal);
+        color: var(--fondo-pantalla);
+    }
+    /* --- CONTENEDOR DE LA LISTA --- */
+    .report-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .group { background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(27,36,48,.04); }
+    
+    /* --- TARJETA DE REPORTE INDIVIDUAL --- */
+    .rep { display: flex; align-items: center; gap: 12px; padding: 11px 12px; position: relative; cursor: pointer; }
+    .rep + .rep::before { content: ""; position: absolute; top: 0; left: 80px; right: 0; height: 0.5px; background: var(--texto-secundario); opacity: 0.2; }
+    
+    .thumb { width: 52px; height: 52px; border-radius: 12px; overflow: hidden; flex: none; background: #3a3d42; }
+    .rep .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .rep .t b { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rep .t span.a { font-size: 12.5px; color: var(--texto-secundario); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rep .chev { width: 8px; height: 14px; flex: none; stroke: var(--texto-secundario); stroke-width: 2.2; stroke-linecap: round; fill: none; }
+    
+    /* --- ETIQUETAS DE ESTADO --- */
+    .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .tag i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .tag.o { color: #f08a24; } .tag.o i { background: #f08a24; } /* Naranja */
+    .tag.b { color: var(--amarillo-vial); } .tag.b i { background: var(--amarillo-vial); } /* Amarillo */
+    .tag.g { color: #2fa66a; } .tag.g i { background: #2fa66a; } /* Verde */
+
+    /* --- ESTADO VACÍO (Cuando no hay reportes) --- */
+    .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; padding: 30px 10px; }
+    .empty .ic { width: 64px; height: 64px; border-radius: 50%; background: var(--fondo-tarjeta); display: grid; place-items: center; margin-bottom: 4px; color: var(--texto-secundario); }
+    .empty h3 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+    .empty p { margin: 0; font-size: 14px; color: var(--texto-secundario); line-height: 1.4; }
+
 
 </style>
 <!-- Zona superior (El mapa) -->
@@ -116,15 +189,55 @@
 <!-- Zona inferior (El menú) -->
 <div class="inferior-panel">
     <div class="catch-line"></div>
-    <h2 style="margin: 0; font-size: 22px;">Cerca de ti</h2>
+    <div class="hd" style="display: flex; flex-direction: column; gap: 2px; padding-top: 4px;">
+        <h2 style="margin: 0; font-size: 22px;">Cerca de ti</h2>
+        <p style="margin: 0; color: var(--texto-secundario); font-size: 14px;">{{ num_reports|default:"0"}} reportes en tu zona esta semana</p>
+    </div>
     
-    <!-- Aquí reemplazamos el "12" fijo por la variable de Django -->
-    <p style="color: var(--texto-secundario); font-size: 14px;">{{ cantidad_reportes|default:"0" }} reportes en tu zona esta semana</p>
+    
+    <!-- Se ve solo con panel contraido-->
     <div class="status-txt">
         <span><i class="status-light" style="background-color: var(--amarillo-vial);"></i>Recibido</span>
         <span><i class="status-light" style="background-color: #f08a24;"></i>En revisión</span>
         <span><i class="status-light" style="background-color: #2fa66a;"></i>Resuelto</span>
     </div>
+    <!-- Se ve solo con panel extendido-->
+    <div class="content-hidden">
+        <div class="chips">
+            <span class="fchip on">Todos</span>
+            <span class="fchip">Recibido</span>
+            <span class="fchip">En revisión</span>
+        </div>
+        <!-- lista de reportes-->
+        <div class="report-scroll">
+            <div class="group">
+                {% for report in report_list %}
+                    <div class="rep">
+                        <!-- Foto miniatura -->
+                        <span class="thumb"></span>
+                        <span class="t">
+                            <b>{{ report.title|default:"Desperfecto reportado" }}</b>
+                                <span class="a">{{ report.direction|default:"Cerca de ti" }}</span>
+                                
+                            <span class="tag o"><i></i>En revisión</span>
+                        </span>
+                        <svg class="chev" viewBox="0 0 8 14"><path d="M1.5 1.5 7 7l-5.5 5.5"/></svg>
+                    </div>
+                {% empty %}
+                    <div class="empty">
+                        <div class="ic">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/>
+                            </svg>
+                        </div>
+                        <h3>Sin reportes cercanos</h3>
+                        <p>Parece que todo está en orden por aquí. ¡Navega por el mapa para explorar!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
     <button class="principal-btn">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
             <path d="M12 5v14M5 12h14"/>
@@ -136,7 +249,35 @@
     <button class="sec-btn">Mis reportes</button>
 </div>
 <script>
-    // 1. Inicializar el mapa y centrarlo en Santiago (Latitud, Longitud, Nivel de Zoom)
+    document.addEventListener('DOMContentLoaded', function() {
+        const panel = document.querySelector('.inferior-panel');
+        const agarradera = document.querySelector('.catch-line');
+
+        // Para probar con clic en el computador
+        agarradera.addEventListener('click', function() {
+            panel.classList.toggle('expanded-panel');
+        });
+
+        // Para deslizar en el celular
+        let toqueInicioY = 0;
+        let toqueFinY = 0;
+
+        agarradera.addEventListener('touchstart', function(e) {
+            toqueInicioY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        agarradera.addEventListener('touchend', function(e) {
+            toqueFinY = e.changedTouches[0].screenY;
+            if (toqueInicioY - toqueFinY > 30) {
+                panel.classList.add('expanded-panel');
+            } else if (toqueFinY - toqueInicioY > 30) {
+                panel.classList.remove('expanded-panel');
+            }
+        }, {passive: true});
+    });
+</script>
+<script>
+    // 1. Inicializar el mapa (Latitud, Longitud, Nivel de Zoom)
     var mapa = L.map('mi-mapa', {
         zoomControl: false // Oculta los botones +/- para que parezca app nativa
     }).setView([-33.4489, -70.6693], 14);
