@@ -102,9 +102,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-cl'
 
-TIME_ZONE = 'UTC'
+# Sin esto las horas de los reportes salen 3 horas corridas.
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 
@@ -131,5 +132,6 @@ MAILERS = {
 }
 
 # A donde se va el usuario despues de iniciar o cerrar sesion.
-LOGIN_REDIRECT_URL = '/reportar/'
+# Al inicio y no derecho a reportar: el reporte parte en /ubicacion/.
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'

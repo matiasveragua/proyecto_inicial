@@ -49,26 +49,48 @@ class RegistroForm(UserCreationForm):
         return usuario
 
 
+# Centro de Santiago. Es el punto que usamos cuando el navegador no nos da
+# la coordenada (el usuario no apreto "usar mi ubicacion" o la rechazo).
+LAT_POR_DEFECTO = -33.4489
+LON_POR_DEFECTO = -70.6693
+
+
 class UbicacionForm(forms.ModelForm):
-    """Donde esta el desperfecto."""
+    """Donde esta el desperfecto. Es el paso 1 del reporte."""
 
     class Meta:
         model = Ubicacion
         fields = ["direccion_texto", "comuna", "latitud", "longitud"]
         labels = {
-            "direccion_texto": "Dirección",
+            "direccion_texto": "Dirección o referencia",
             "comuna": "Comuna",
         }
         widgets = {
             "direccion_texto": forms.TextInput(
-                attrs={"placeholder": "Av. Grecia 1234"}
+                attrs={"placeholder": "Ej: Av. Vicuña Mackenna 3900"}
             ),
-            "comuna": forms.TextInput(attrs={"placeholder": "Ñuñoa"}),
-            # Estas dos las va a rellenar el mapa mas adelante, por eso van
-            # ocultas. Mientras tanto la vista les pone el centro de Santiago.
+            "comuna": forms.TextInput(attrs={"placeholder": "Ej: Ñuñoa"}),
+            # El boton de geolocalizacion las rellena por JavaScript.
             "latitud": forms.HiddenInput(),
             "longitud": forms.HiddenInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # La coordenada es un extra: si el navegador no la entrega, el reporte
+        # igual tiene que poder enviarse. La direccion escrita si es obligatoria.
+        self.fields["latitud"].required = False
+        self.fields["longitud"].required = False
+
+        for campo in self.fields.values():
+            # "v" es la clase con la que Bastian da estilo a las cajas de texto.
+            campo.widget.attrs["class"] = "v"
+
+    def clean_latitud(self):
+        return self.cleaned_data.get("latitud") or LAT_POR_DEFECTO
+
+    def clean_longitud(self):
+        return self.cleaned_data.get("longitud") or LON_POR_DEFECTO
 
 
 class ReporteForm(forms.ModelForm):
@@ -89,3 +111,8 @@ class ReporteForm(forms.ModelForm):
                 attrs={"rows": 4, "placeholder": "Cuenta brevemente qué pasa"}
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Por defecto el selector parte con un texto en ingles.
+        self.fields["categoria"].empty_label = "Elige una opción"

@@ -111,8 +111,10 @@
         <a href="{% url 'inicio' %}" title="Volver">&larr;</a>
         <h1>Mis reportes</h1>
 
-        {# Django exige POST para cerrar sesion, por eso es un formulario
-           y no un simple enlace. #}
+        {% comment %}
+           Django exige POST para cerrar sesion, por eso es un formulario
+           y no un simple enlace.
+        {% endcomment %}
         <form method="post" action="{% url 'logout' %}" style="margin-left: auto;">
             {% csrf_token %}
             <button type="submit"
@@ -162,6 +164,6 @@
         <p class="vacio">Todavía no has hecho ningún reporte.</p>
     {% endfor %}
 
-    <a href="{% url 'reportar' %}" class="boton-principal">Reportar desperfecto</a>
+    <a href="{% url 'ubicacion' %}" class="boton-principal">Reportar desperfecto</a>
 </div>
 {% endblock contenido %}
