@@ -36,7 +36,7 @@
     }
     .boton-secundario {
         background-color: transparent;
-        color: var(--amarillo-vial);
+        color: var(--color-boton-secundario);
         border: none;
         width: 100%;
         height: 44px;
@@ -106,8 +106,13 @@
     
     <!-- Tu saludo flotante se mantiene intacto -->
     <div class="saludo-flotante" style="position: absolute; top: 52px; left: 16px; z-index: 1000;">
-        <span class="avatar-usuario">M</span>
-        <b style="font-size: 15px;">Hola, Matías</b>
+        {% if user.is_authenticated %}
+            <span class="avatar-usuario">{{ saludo|first|upper }}</span>
+            <b style="font-size: 15px;">Hola, {{ saludo|truncatechars:16 }}</b>
+        {% else %}
+            <span class="avatar-usuario">?</span>
+            <a href="{% url 'login' %}" style="font-size: 15px; font-weight: bold; color: inherit; text-decoration: none;">Iniciar sesión</a>
+        {% endif %}
     </div>
 
 </div>
@@ -118,13 +123,13 @@
     <h2 style="margin: 0; font-size: 22px;">Cerca de ti</h2>
     
     <!-- Aquí reemplazamos el "12" fijo por la variable de Django -->
-    <p style="color: var(--texto-secundario); font-size: 14px;">{{ cantidad_reportes|default:"0" }} reportes en tu zona esta semana</p>
+    <p style="color: var(--texto-secundario); font-size: 14px;">{{ cantidad_reportes }} reporte{{ cantidad_reportes|pluralize:"s" }} en tu zona esta semana</p>
     <div class="leyenda-estados">
         <span><i class="punto-estado" style="background-color: var(--amarillo-vial);"></i>Recibido</span>
         <span><i class="punto-estado" style="background-color: #f08a24;"></i>En revisión</span>
         <span><i class="punto-estado" style="background-color: #2fa66a;"></i>Resuelto</span>
     </div>
-    <a href="{% url 'reportar' %}" class="boton-principal" style="text-decoration: none;">
+    <a href="{% url 'ubicacion' %}" class="boton-principal" style="text-decoration: none;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
             <path d="M12 5v14M5 12h14"/>
         </svg>
@@ -134,6 +139,8 @@
     <!-- Botón fantasma -->
     <a href="{% url 'mis_reportes' %}" class="boton-secundario" style="display: block; text-align: center; text-decoration: none;">Mis reportes</a>
 </div>
+{{ puntos|json_script:"datos-reportes" }}
+
 <script>
     // 1. Inicializar el mapa y centrarlo en Santiago (Latitud, Longitud, Nivel de Zoom)
     var mapa = L.map('mi-mapa', {
@@ -153,5 +160,27 @@
         fillOpacity: 1,
         radius: 7
     }).addTo(mapa);
+
+    // 5. Dibujar un punto por cada reporte, del color que dice la leyenda.
+    const COLOR_ESTADO = {
+        recibido: 'var(--amarillo-vial)',
+        en_revision: '#f08a24',
+        atendido: '#2fa66a',
+        descartado: '#98a2b3'
+    };
+
+    const puntos = JSON.parse(document.getElementById('datos-reportes').textContent);
+
+    puntos.forEach(function (p) {
+        L.circleMarker([p.lat, p.lon], {
+            color: '#ffffff',
+            weight: 2,
+            fillColor: COLOR_ESTADO[p.estado] || '#98a2b3',
+            fillOpacity: 1,
+            radius: 8
+        })
+        .bindPopup('<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + p.etiqueta)
+        .addTo(mapa);
+    });
 </script>
 {% endblock contenido %}
