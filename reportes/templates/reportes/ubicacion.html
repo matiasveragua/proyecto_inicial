@@ -224,6 +224,13 @@
     const pista = document.querySelector('.hint');
     const pin = document.querySelector('.pin');
 
+    // nuevas variables para buscar la dirección escrita
+    const formulario = document.querySelector('form');
+    const campoDireccion = document.getElementById('id_direccion_texto');
+    const campoComuna = document.getElementById('id_comuna');
+
+    // Lógica del botón "Usar mi ubicación actual"
+
     btnUbicacion.addEventListener('click', function () {
 
         if (!navigator.geolocation) {
@@ -256,6 +263,64 @@
 
             { enableHighAccuracy: true, timeout: 10000 }
         );
+    });
+
+    // Buscar dirección automáticamente al apretar "Continuar"
+
+    formulario.addEventListener('submit', function (event) {
+
+        // Si los campos ocultos ya tienen números (porque usó el botón de ubicación),
+        // dejamos que el formulario siga su viaje normal hacia Django.
+
+        if (campoLat.value !== "" && campoLon.value !== "") {
+            return; 
+        }
+
+        // Si están vacíos, detenemos el envío del formulario un momento
+
+        event.preventDefault();
+        
+        pista.textContent = 'Buscando la calle en el mapa...';
+        const botonSubmit = formulario.querySelector('button[type="submit"]');
+        botonSubmit.disabled = true; // Bloqueamos el botón para evitar doble clic
+
+        // Armamos la búsqueda uniendo la calle, la comuna y el país
+
+        const textoBusqueda = campoDireccion.value + ", " + campoComuna.value + ", Chile";
+        
+        // Consultamos al motor gratuito de OpenStreetMap
+
+        const urlBusqueda = "https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(textoBusqueda);
+
+        fetch(urlBusqueda)
+            .then(respuesta => respuesta.json())
+            .then(datos => {
+                if (datos.length > 0) {
+
+                    // Encontramos la calle. Rellenamos los inputs ocultos
+
+                    campoLat.value = parseFloat(datos[0].lat).toFixed(6);
+                    campoLon.value = parseFloat(datos[0].lon).toFixed(6);
+                    pista.textContent = '¡Dirección encontrada!';
+                    
+                    // Ahora sí, liberamos el formulario para que viaje a Django con las coordenadas
+
+                    formulario.submit();
+                } else {
+
+                    // Si el mapa no conoce la calle
+
+                    alert("No encontramos esa dirección exacta. Intenta dar más detalles (Ej: Av. Concha y Toro 123) o usa tu ubicación actual.");
+                    pista.textContent = 'Dirección no encontrada';
+                    botonSubmit.disabled = false; // Desbloqueamos el botón
+                }
+            })
+            .catch(error => {
+                // Si falla el internet o el servidor de mapas
+                
+                alert("Hubo un problema al buscar la calle. Se usará la ubicación por defecto.");
+                formulario.submit(); 
+            });
     });
 </script>
 
