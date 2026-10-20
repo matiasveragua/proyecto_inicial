@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-    .back-map {
+    .mapa-fondo {
         flex: 1;
         position: relative;
     }
@@ -13,20 +13,73 @@
         border-radius: 26px 26px 0 0 ;
         box-shadow: 0 -10px 30px rgba(0,0,0,0.5); 
         padding: 20px;
-        position: relative;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
         z-index: 2000;
-        margin-top: -30px;
-        transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), height 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }    
-    .inferior-panel:not(.expanded-panel) .catch-line {
-        animation: jump 3.2s ease-in-out infinite;
+    .inferior-panel.low {
+        height: 178px;
+        text-align: center;
     }
-    @keyframes jump {
-        0%, 70%, 100% { transform: translateY(0); }
-        80% { transform: translateY(-4px); } 
-        90% { transform: translateY(0); }
+    .inferior-panel.low .content-hidden {
+        display: none !important;
     }
     
+    .inferior-panel.low #header-contraido {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .inferior-panel.expanded-panel {
+        top: 108px !important;
+        height: calc(100vh - 108px) !important;
+        padding-bottom: 34px;
+    }
+    
+    .inferior-panel.expanded-panel #header-contraido {
+        display: none !important;
+    }
+    
+    .inferior-panel.expanded-panel .content-hidden {
+        display: flex !important;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+    
+    .content-hidden {
+        display: none;
+
+    }
+    .header-expandido-centrado {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 14px;
+        position: relative;
+        flex: none;
+    }
+    .link-mis-reportes {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--amarillo-vial);
+        text-decoration: none;
+    }
     .principal-btn {
         background-color: var(--amarillo-vial);
         color: var(--texto-sobre-amarillo);
@@ -37,32 +90,26 @@
         font-size: 17px;
         font-weight: bold;
         cursor: pointer;
-        margin-top: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
+        flex: none;
+        margin-top: auto;
     }
-    .sec-btn {
-        background-color: transparent;
-        color: var(--color-sec-btn);
-        border: none;
-        width: 100%;
-        height: 44px;
-        font-size: 17px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-top: 8px;
-    }
+
     .catch-line {
         width: 38px;
         height: 5px;
         background-color: var(--texto-secundario);
         border-radius: 3px;
-        margin: 0 auto 15px auto; 
+        margin: 0 auto 14px auto; 
         opacity: 0.5;
+        cursor: pointer;
+        flex: none;
     }
-    .float-txt {
+
+    .saludo-flotante {
         position: absolute;
         top: 52px;
         left: 16px;
@@ -72,14 +119,12 @@
         gap: 9px;
         padding: 6px 14px 6px 6px;
         border-radius: 20px;
-        background-color: var(--fondo-tarjeta); 
-        color: var(--texto-principal);
+        background-color: rgba(23,28,35,0.84);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         box-shadow: 0 6px 18px -8px rgba(0,0,0,0.3);
-    
     }
-    .user-avatar {
+    .avatar-usuario {
         width: 28px;
         height: 28px;
         border-radius: 50%;
@@ -91,39 +136,6 @@
         font-size: 13px;
         font-weight: bold;
     }
-    .status-txt {
-        display: flex;
-        gap: 14px;
-        font-size: 12.5px;
-        color: var(--texto-secundario);
-        margin-top: 5px;
-        margin-bottom: 20px;
-    }
-    .status-light {
-        display: inline-block;
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        margin-right: 5px;
-    }
-    .expanded-panel {
-        top: 108px;
-        height: auto;
-        padding-bottom: 20px;
-    }
-    .content-hidden {
-        display: none;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-        margin-top: 15px;
-        margin-top: 10px;
-    }
-    /* Cuando se expanda la barra, se oculta el txt q habia y 
-    muestra el contenido nuevo */
-    .expanded-panel .status-txt {display: none;}
-    .expanded-panel .content-hidden {display: flex;}
-    /* Estilos de los filtros y lista */
     .chips {
         display: flex;
         gap: 8px;
@@ -143,11 +155,9 @@
         background: var(--texto-principal);
         color: var(--fondo-pantalla);
     }
-    /* --- CONTENEDOR DE LA LISTA --- */
     .report-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
     .group { background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(27,36,48,.04); }
     
-    /* --- TARJETA DE REPORTE INDIVIDUAL --- */
     .rep { display: flex; align-items: center; gap: 12px; padding: 11px 12px; position: relative; cursor: pointer; }
     .rep + .rep::before { content: ""; position: absolute; top: 0; left: 80px; right: 0; height: 0.5px; background: var(--texto-secundario); opacity: 0.2; }
     
@@ -157,125 +167,133 @@
     .rep .t span.a { font-size: 12.5px; color: var(--texto-secundario); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .rep .chev { width: 8px; height: 14px; flex: none; stroke: var(--texto-secundario); stroke-width: 2.2; stroke-linecap: round; fill: none; }
     
-    /* --- ETIQUETAS DE ESTADO --- */
     .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-top: 2px; }
     .tag i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-    .tag.o { color: #f08a24; } .tag.o i { background: #f08a24; } /* Naranja */
-    .tag.b { color: var(--amarillo-vial); } .tag.b i { background: var(--amarillo-vial); } /* Amarillo */
-    .tag.g { color: #2fa66a; } .tag.g i { background: #2fa66a; } /* Verde */
-
-    /* --- ESTADO VACÍO (Cuando no hay reportes) --- */
+    .tag.o { color: #f08a24; } .tag.o i { background: #f08a24; } 
+    .tag.b { color: var(--amarillo-vial); } .tag.b i { background: var(--amarillo-vial); } 
+    .tag.g { color: #2fa66a; } .tag.g i { background: #2fa66a; } 
     .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; padding: 30px 10px; }
     .empty .ic { width: 64px; height: 64px; border-radius: 50%; background: var(--fondo-tarjeta); display: grid; place-items: center; margin-bottom: 4px; color: var(--texto-secundario); }
     .empty h3 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
     .empty p { margin: 0; font-size: 14px; color: var(--texto-secundario); line-height: 1.4; }
-
-
 </style>
 <!-- Zona superior (El mapa) -->
-<div class="back-map">
-    
-    <!-- El lienzo donde Leaflet dibujará las calles reales -->
+<div class="mapa-fondo">
     <div id="mi-mapa" style="width: 100%; height: 100%;"></div>
-    
-    <!-- Tu saludo flotante se mantiene intacto -->
-    <div class="float-txt" style="position: absolute; top: 52px; left: 16px; z-index: 1000;">
-        <span class="user-avatar">M</span>
-        <b style="font-size: 15px;">Hola, Matías</b>
+    <!-- saludo flotante -->
+    <div class="saludo-flotante">
+        {% if user.is_authenticated %}
+            <span class="avatar-usuario">{{ saludo|first|upper }}</span>
+            <b style="font-size: 15px;">Hola, {{ saludo|truncatechars:16 }}</b>
+        {% else %}
+            <span class="avatar-usuario">?</span>
+            <a href="{% url 'login' %}" style="font-size: 15px; font-weight: bold; color: inherit; text-decoration: none;">Iniciar sesión</a>
+        {% endif %}
     </div>
-
+    <!--Botones flotantes (Lupa, Capas, Info) -->
+    <div class="map-btns" style="position: absolute; top: 52px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
+        <div role="button" aria-label="Vista satélite" style="width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background-color: rgba(23,28,35,0.84); backdrop-filter: blur(16px); box-shadow: 0 6px 18px -8px rgba(0,0,0,0.35); color: white; cursor: pointer;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 16.5l9 5 9-5"/></svg>
+        </div>
+        <div role="button" aria-label="Qué significan los pines" style="width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background-color: rgba(23,28,35,0.84); backdrop-filter: blur(16px); box-shadow: 0 6px 18px -8px rgba(0,0,0,0.35); color: white; cursor: pointer;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        </div>
+    </div>
 </div>
 
 <!-- Zona inferior (El menú) -->
-<div class="inferior-panel">
-    <div class="catch-line"></div>
-    <div class="hd" style="display: flex; flex-direction: column; gap: 2px; padding-top: 4px;">
-        <h2 style="margin: 0; font-size: 22px;">Cerca de ti</h2>
-        <p style="margin: 0; color: var(--texto-secundario); font-size: 14px;">{{ num_reports|default:"0"}} reportes en tu zona esta semana</p>
-    </div>
+<div class="inferior-panel low" id="panel-inferior">
     
-    
-    <!-- Se ve solo con panel contraido-->
-    <div class="status-txt">
-        <span><i class="status-light" style="background-color: var(--amarillo-vial);"></i>Recibido</span>
-        <span><i class="status-light" style="background-color: #f08a24;"></i>En revisión</span>
-        <span><i class="status-light" style="background-color: #2fa66a;"></i>Resuelto</span>
+    <!-- Encabezado Contraído -->
+    <div id="header-contraido">
+        <div class="catch-line"></div>
+        <div class="tx">
+            <b>Cerca de ti</b>
+            <span>{{ num_reports|default:"0" }} reportes en tu zona</span>
+        </div>
     </div>
-    <!-- Se ve solo con panel extendido-->
-    <div class="content-hidden">
+
+    <!-- Contenido Expandido -->
+    <div class="content-hidden" id="contenido-expandido">
+        <div class="catch-line"></div>
+
+        <div class="header-expandido-centrado">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <h2 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.025em;">Cerca de ti</h2>
+                <span style="color: var(--texto-secundario); font-size: 14px;">{{ num_reports|default:"0" }} abiertos en tu zona</span>
+            </div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'mis_reportes' %}" class="link-mis-reportes">Mis reportes</a>
+            {% endif %}
+        </div>
+        
         <div class="chips">
             <span class="fchip on">Todos</span>
             <span class="fchip">Recibido</span>
             <span class="fchip">En revisión</span>
         </div>
-        <!-- lista de reportes-->
+        
         <div class="report-scroll">
-            <div class="group">
-                {% for report in report_list %}
-                    <div class="rep">
-                        <!-- Foto miniatura -->
-                        <span class="thumb"></span>
-                        <span class="t">
-                            <b>{{ report.title|default:"Desperfecto reportado" }}</b>
+            {% if report_list %}
+                <div class="group">
+                    {% for report in report_list %}
+                        <div class="rep">
+                            <span class="thumb"></span>
+                            <span class="t">
+                                <b>{{ report.title|default:"Desperfecto reportado" }}</b>
                                 <span class="a">{{ report.direction|default:"Cerca de ti" }}</span>
-                                
-                            <span class="tag o"><i></i>En revisión</span>
-                        </span>
-                        <svg class="chev" viewBox="0 0 8 14"><path d="M1.5 1.5 7 7l-5.5 5.5"/></svg>
-                    </div>
-                {% empty %}
-                    <div class="empty">
-                        <div class="ic">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/>
-                            </svg>
+                                <span class="tag o"><i></i>En revisión</span>
+                            </span>
                         </div>
-                        <h3>Sin reportes cercanos</h3>
-                        <p>Parece que todo está en orden por aquí. ¡Navega por el mapa para explorar!</p>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">
+                    <div class="ic">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/>
+                        </svg>
                     </div>
-                {% endfor %}
-            </div>
+                    <h3>Sin reportes cercanos</h3>
+                    <p>Parece que todo está en orden por aquí. ¡Navega por el mapa para explorar!</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 
-    <button class="principal-btn">
+    <!-- Botón principal -->
+    <a href="{% url 'reportar' %}" class="principal-btn" style="text-decoration: none;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
             <path d="M12 5v14M5 12h14"/>
         </svg>
         Reportar desperfecto
-    </button>
-    
-    <!-- Botón fantasma -->
-    <button class="sec-btn">Mis reportes</button>
+    </a>  
 </div>
+
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const panel = document.querySelector('.inferior-panel');
-        const agarradera = document.querySelector('.catch-line');
+        const panel = document.getElementById('panel-inferior');
+        const headerContraido = document.getElementById('header-contraido');
 
-        // Para probar con clic en el computador
-        agarradera.addEventListener('click', function() {
+        function togglePanel(e) {
+            e.stopPropagation();
             panel.classList.toggle('expanded-panel');
-        });
+            panel.classList.toggle('low');
+        }
 
-        // Para deslizar en el celular
-        let toqueInicioY = 0;
-        let toqueFinY = 0;
-
-        agarradera.addEventListener('touchstart', function(e) {
-            toqueInicioY = e.changedTouches[0].screenY;
-        }, {passive: true});
-
-        agarradera.addEventListener('touchend', function(e) {
-            toqueFinY = e.changedTouches[0].screenY;
-            if (toqueInicioY - toqueFinY > 30) {
-                panel.classList.add('expanded-panel');
-            } else if (toqueFinY - toqueInicioY > 30) {
-                panel.classList.remove('expanded-panel');
-            }
-        }, {passive: true});
+        // Abre o cierra al hacer clic en el encabezado contraído
+        headerContraido.addEventListener('click', togglePanel);
+        
+        // Cierra o abre al hacer clic en la barrita (agarradera) del panel expandido
+        const agarraderaExpandida = panel.querySelector('#contenido-expandido .catch-line');
+        if(agarraderaExpandida) {
+            agarraderaExpandida.addEventListener('click', togglePanel);
+        }
     });
 </script>
+
 <script>
     // 1. Inicializar el mapa (Latitud, Longitud, Nivel de Zoom)
     var mapa = L.map('mi-mapa', {
@@ -286,7 +304,6 @@
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
         referrerPolicy: 'strict-origin-when-cross-origin'
-
     }).addTo(mapa);
     // 4. Dibujar el punto azul de "Mi Ubicación"
     L.circleMarker([-33.4489, -70.6693], {
@@ -296,5 +313,27 @@
         fillOpacity: 1,
         radius: 7
     }).addTo(mapa);
+
+    // 5. Dibujar un punto por cada reporte, del color que dice la leyenda.
+    const COLOR_ESTADO = {
+        recibido: 'var(--amarillo-vial)',
+        en_revision: '#f08a24',
+        atendido: '#2fa66a',
+        descartado: '#98a2b3'
+    };
+
+    const puntos = JSON.parse(document.getElementById('datos-reportes').textContent);
+
+    puntos.forEach(function (p) {
+        L.circleMarker([p.lat, p.lon], {
+            color: '#ffffff',
+            weight: 2,
+            fillColor: COLOR_ESTADO[p.estado] || '#98a2b3',
+            fillOpacity: 1,
+            radius: 8
+        })
+        .bindPopup('<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + p.etiqueta)
+        .addTo(mapa);
+    });
 </script>
 {% endblock contenido %}

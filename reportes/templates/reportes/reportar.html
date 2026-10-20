@@ -1,0 +1,122 @@
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+
+<style>
+
+    /* Mismo lenguaje visual que la pantalla de ubicacion, para que el paso 2
+       no se vea de otra aplicacion. */
+
+    .top-bar { flex: none; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .top-bar .line { display: flex; align-items: center; justify-content: space-between; height: 30px; }
+
+    .back { display: inline-flex; align-items: center; gap: 2px; font-size: 16px; color: #8f6200; font-weight: 600; margin-left: -4px; text-decoration: none; }
+    .back svg { width: 12px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    .stepno { font-size: 12.5px; color: var(--texto-secundario); font-weight: 600; }
+    .prog { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .prog i { height: 4px; border-radius: 2px; background: rgba(27, 36, 48, .07); }
+    .prog i.on { background: var(--amarillo-vial); }
+
+    .large { margin: 8px 0 0 0; font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.12; color: var(--texto-principal); }
+
+    .pbody { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 34px; }
+
+    /* La direccion que quedo del paso 1 */
+
+    .elegido { display: flex; align-items: center; gap: 10px; background: var(--fondo-tarjeta); border-radius: 14px; padding: 12px 14px; }
+    .elegido svg { width: 18px; height: 22px; flex: none; }
+    .elegido .txt { min-width: 0; }
+    .elegido b { display: block; font-size: 14.5px; font-weight: 600; }
+    .elegido span { font-size: 12.5px; color: var(--texto-secundario); }
+    .elegido a { margin-left: auto; flex: none; font-size: 13px; color: #8f6200; font-weight: 600; text-decoration: none; }
+
+    /* Los campos del formulario */
+
+    .campo { display: flex; flex-direction: column; gap: 6px; }
+    .campo > label { font-size: 12.5px; color: var(--texto-secundario); }
+
+    .campo input[type="text"],
+    .campo input[type="file"],
+    .campo select,
+    .campo textarea {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(128, 128, 128, 0.3);
+        background-color: var(--fondo-tarjeta);
+        color: var(--texto-principal);
+        font-size: 16px;
+        font-family: inherit;
+    }
+    .campo textarea { resize: vertical; }
+
+    .aviso { background: rgba(217, 48, 37, .12); color: #d93025; border-radius: 12px; padding: 11px 14px; font-size: 13.5px; margin: 0; }
+
+    .sp { flex: 1; }
+    .btn { appearance: none; border: 0; font-size: 17px; font-weight: 700; height: 52px; border-radius: 16px; width: 100%; cursor: pointer; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); }
+
+</style>
+
+<!-- barra superior y el progreso -->
+
+<div class="top-bar">
+    <div class="line">
+
+        <a href="{% url 'ubicacion' %}" class="back">
+            <svg viewBox="0 0 12 20"><path d="M10 2 2 10l8 8"/></svg>Volver
+        </a>
+
+        <span class="stepno">Paso 2 de 3</span>
+
+    </div>
+
+    <div class="prog"><i class="on"></i><i class="on"></i><i></i></div>
+    <h1 class="large">¿Qué pasa en ese punto?</h1>
+
+</div>
+
+<div class="pbody">
+
+    <!-- lo que eligio en el paso anterior, para que sepa de que lugar habla -->
+
+    <div class="elegido">
+
+        <svg viewBox="0 0 34 44">
+            <path d="M17 0C7.6 0 0 7.3 0 16.5 0 28 17 44 17 44s17-16 17-27.5C34 7.3 26.4 0 17 0z" fill="#ffc20e" stroke="#1b2430" stroke-width="2.5"/>
+        </svg>
+
+        <div class="txt">
+            <b>{{ direccion }}</b>
+            <span>{{ comuna }}</span>
+        </div>
+
+        <a href="{% url 'ubicacion' %}">Cambiar</a>
+
+    </div>
+
+    {# enctype es obligatorio para que viaje la foto #}
+    <form method="post" enctype="multipart/form-data"
+          style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
+
+        {% csrf_token %}
+
+        {% for campo in form %}
+            <div class="campo">
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                {{ campo }}
+                {% for error in campo.errors %}
+                    <p class="aviso">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="sp"></div>
+
+        <button type="submit" class="btn">Enviar reporte</button>
+
+    </form>
+
+</div>
+
+{% endblock contenido %}
