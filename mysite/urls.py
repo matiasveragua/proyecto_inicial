@@ -1,29 +1,34 @@
 """
 URL configuration for mysite project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+Rutas del proyecto. El flujo para reportar es:
+
+    /              inicio, el mapa con los dos botones
+    /ubicacion/    paso 1: donde esta el desperfecto
+    /reportar/     paso 2: que es y una foto
+    /mis-reportes/ la lista de lo que ha reportado el usuario
+
+Las de cuenta (/accounts/login/ y /accounts/logout/) las trae Django hechas.
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 from reportes import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('inicio/', views.inicio, name='inicio'),
-    path('login/', views.login, name= 'login'),
+
+    path('', views.inicio, name='inicio'),
+    path('ubicacion/', views.ubicacion, name='ubicacion'),
+    path('reportar/', views.reportar, name='reportar'),
+    path('mis-reportes/', views.mis_reportes, name='mis_reportes'),
+
+    path('accounts/registro/', views.registro, name='registro'),
+    # Trae gratis /accounts/login/ y /accounts/logout/ de Django.
+    # LoginView usa reportes/login.html, que es la pantalla que hizo Bastian.
+    path('accounts/login/', views.EntrarView.as_view(), name='login'),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
 
 # En desarrollo, servir las fotos subidas desde /media/
