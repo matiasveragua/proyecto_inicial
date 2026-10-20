@@ -2,6 +2,11 @@
 
 {% block contenido %}
 
+<!-- Esto cargara las texturas para que el mapa ya no sea una imagen estatica -->
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
 
     /* diseño de la pantalla de ubicacion */
@@ -37,7 +42,7 @@
 
     /* texto informativo en el mismo mapa */
 
-    .hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); white-space: nowrap; font-size: 12.5px; padding: 6px 14px; border-radius: 14px; background: var(--fondo-tarjeta); color: var(--texto-principal); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); width: max-content; max-width: 90%; text-align: center; line-height: 1.3; font-size: 12.5px; padding: 6px 14px; border-radius: 14px; background: var(--fondo-tarjeta); color: var(--texto-principal); box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; }
 
     /* caja donde va la direccion */
 
@@ -83,51 +88,17 @@
 
 <div class="pbody">
     
-    <!-- mapa -->
+    <!-- mapa (ya no es una imagen fija) -->
     
     <div class="map">
 
-        <!-- fondo del mapa -->
+        <!-- Este div vacío es donde Leaflet inyectará el mapa real -->
         
-        <svg class="bg" viewBox="0 0 300 380" preserveAspectRatio="xMidYMid slice">
+        <div id="mapa-ubicacion" style="width: 100%; height: 100%; z-index: 1;"></div>
 
-            <rect width="300" height="380" fill="#eceae3"/>
-            <g fill="#e2dfd5">
-
-                <rect x="12" y="12" width="64" height="62" rx="3"/><rect x="92" y="12" width="46" height="62" rx="3"/><rect x="178" y="12" width="52" height="62" rx="3"/><rect x="246" y="12" width="50" height="62" rx="3"/>
-                <rect x="12" y="90" width="64" height="70" rx="3"/><rect x="92" y="90" width="46" height="70" rx="3"/><rect x="178" y="90" width="52" height="70" rx="3"/><rect x="246" y="90" width="50" height="70" rx="3"/>
-                <rect x="12" y="176" width="64" height="70" rx="3"/><rect x="178" y="176" width="52" height="70" rx="3"/><rect x="246" y="176" width="50" height="70" rx="3"/>
-                <rect x="12" y="262" width="64" height="60" rx="3"/><rect x="92" y="262" width="46" height="60" rx="3"/><rect x="178" y="262" width="52" height="60" rx="3"/><rect x="246" y="262" width="50" height="60" rx="3"/>
-
-            </g>
-
-            <rect x="92" y="176" width="46" height="70" rx="8" fill="#cfe3c2"/>
-            <path d="M0 338 C60 316 120 360 180 334 S270 308 300 322 L300 380 L0 380 Z" fill="#bcd9ec"/>
-
-            <g stroke="#ffffff" stroke-width="7" fill="none" stroke-linecap="round">
-
-                <path d="M0 82 H300"/><path d="M0 168 H300"/><path d="M0 254 H300"/><path d="M84 0 V380"/><path d="M146 0 V380"/><path d="M238 0 V380"/>
-
-            </g>
-
-            <path d="M-10 40 L310 214" stroke="#d1ccbe" stroke-width="13" fill="none"/>
-            <path d="M-10 40 L310 214" stroke="#fbd983" stroke-width="10" fill="none"/>
+        <!-- Le ponemos un z-index alto para que el texto flote sobre las calles -->
         
-        </svg>
-        
-        <!-- pin -->
-        <span class="pin" style="left:50%;top:52%">
-
-            <svg viewBox="0 0 34 44" style="overflow: visible;">
-
-                <path d="M17 0C7.6 0 0 7.3 0 16.5 0 28 17 44 17 44s17-16 17-27.5C34 7.3 26.4 0 17 0z" fill="#ffc20e" stroke="#1b2430" stroke-width="2.5"/>
-                <path d="M12.5 11l4.5 7-3.6 3.6 6 7.4" stroke="#1b2430" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-
-            </svg>
-        </span>
-
-        <span class="hint">Usa el botón para fijar el punto</span>
-
+        <span class="hint" style="z-index: 1000;">El pin se moverá al escribir tu dirección o Lo puedes arrastrar para mayor precisión</span>
     </div>
     
     <form method="POST" action="">
@@ -214,49 +185,114 @@
 </div>
 
 <script>
-    // El boton "Usar mi ubicación actual" rellena los dos input ocultos.
-    // Si el usuario no da permiso, el reporte igual se puede enviar: la vista
-    // usa el centro de Santiago como punto por defecto.
+    // Iniciar el mapa (centrado en Santiago por defecto)
 
+    var mapa = L.map('mapa-ubicacion', {
+        zoomControl: false 
+    }).setView([-33.4489, -70.6693], 13);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        referrerPolicy: 'strict-origin-when-cross-origin'
+    }).addTo(mapa);
+
+    // Crear el icono personalizado usando exactamente tu pin amarillo SVG
+
+    var iconoPin = L.divIcon({
+        html: `<svg viewBox="0 0 34 44" style="width: 34px; height: 44px; filter: drop-shadow(0 4px 4px rgba(0,0,0,.3)); overflow: visible;"><path d="M17 0C7.6 0 0 7.3 0 16.5 0 28 17 44 17 44s17-16 17-27.5C34 7.3 26.4 0 17 0z" fill="#ffc20e" stroke="#1b2430" stroke-width="2.5"/><path d="M12.5 11l4.5 7-3.6 3.6 6 7.4" stroke="#1b2430" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+        className: '',
+        iconSize: [34, 44],
+        iconAnchor: [17, 44] // Hace que la punta de abajo sea la que marca el lugar exacto
+    });
+
+    // Poner el pin en el mapa y hacerlo ARRASTRABLE (Draggable)
+    var marcador = L.marker([-33.4489, -70.6693], {
+        icon: iconoPin,
+        draggable: true
+    }).addTo(mapa);
+
+    // Conectar con los campos con el HTML
     const btnUbicacion = document.getElementById('btnUbicacion');
     const campoLat = document.getElementById('lat');
     const campoLon = document.getElementById('lon');
+    const campoDireccion = document.getElementById('id_direccion_texto');
+    const campoComuna = document.getElementById('id_comuna');
     const pista = document.querySelector('.hint');
-    const pin = document.querySelector('.pin');
 
+    // Si el usuario arrastra el pin manualmente, actualizamos las coordenadas
+    marcador.on('dragend', function() {
+        var posicion = marcador.getLatLng();
+        campoLat.value = posicion.lat.toFixed(6);
+        campoLon.value = posicion.lng.toFixed(6);
+        pista.textContent = 'Pin ajustado manualmente';
+    });
+
+    // Botón de GPS: Mueve el mapa y el pin a tu ubicación física
     btnUbicacion.addEventListener('click', function () {
-
-        if (!navigator.geolocation) {
-            pista.textContent = 'Tu navegador no entrega la ubicación';
-            return;
-        }
-
-        btnUbicacion.disabled = true;
+        if (!navigator.geolocation) return;
         pista.textContent = 'Buscando tu ubicación...';
+        btnUbicacion.disabled = true;
 
         navigator.geolocation.getCurrentPosition(
-
             function (posicion) {
-                // toFixed(6) deja unos 11 cm de precisión, de sobra para un hoyo.
-                campoLat.value = posicion.coords.latitude.toFixed(6);
-                campoLon.value = posicion.coords.longitude.toFixed(6);
-
-                pista.textContent = 'Punto fijado con tu ubicación actual';
-                pin.style.filter = 'drop-shadow(0 4px 4px rgba(0,0,0,.3)) saturate(1.4)';
+                let lat = posicion.coords.latitude;
+                let lon = posicion.coords.longitude;
+                campoLat.value = lat.toFixed(6);
+                campoLon.value = lon.toFixed(6);
+                
+                mapa.setView([lat, lon], 16); // Hace zoom a tu calle
+                marcador.setLatLng([lat, lon]); // Mueve el pin
+                
+                pista.textContent = 'Ubicación fijada con GPS';
                 btnUbicacion.disabled = false;
             },
-
             function (error) {
-                // 1 es PERMISSION_DENIED. Los otros son "no se pudo" y "demoró mucho".
-                pista.textContent = (error.code === 1)
-                    ? 'No diste permiso; escribe la dirección y sigue'
-                    : 'No pudimos ubicarte; escribe la dirección y sigue';
+                pista.textContent = 'No pudimos usar tu GPS';
                 btnUbicacion.disabled = false;
             },
-
             { enableHighAccuracy: true, timeout: 10000 }
         );
     });
+
+    // Geocodificación: Mueve el pin automáticamente al escribir la dirección
+    function buscarDireccionEnMapa() {
+        let dir = campoDireccion.value;
+        let com = campoComuna.value;
+        
+        // Solo busca si escribiste algo
+        if (dir.length > 3) {
+            pista.textContent = 'Buscando calle...';
+            
+            // Une la calle, comuna y restringe a Santiago, Chile para mayor precisión
+            let textoBusqueda = dir + ", " + (com ? com + ", " : "") + "Región Metropolitana, Chile";
+            let urlBusqueda = "https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(textoBusqueda);
+
+            fetch(urlBusqueda)
+                .then(res => res.json())
+                .then(datos => {
+                    if (datos.length > 0) {
+                        let lat = parseFloat(datos[0].lat);
+                        let lon = parseFloat(datos[0].lon);
+                        campoLat.value = lat.toFixed(6);
+                        campoLon.value = lon.toFixed(6);
+                        
+                        mapa.setView([lat, lon], 16);
+                        marcador.setLatLng([lat, lon]);
+                        pista.textContent = 'Puedes arrastrar el pin si quieres ser más exacto';
+                    } else {
+                        pista.textContent = 'Calle no encontrada (Ajusta el texto o usa el mapa)';
+                    }
+                })
+                .catch(e => {
+                    pista.textContent = 'Error buscando en el mapa';
+                });
+        }
+    }
+
+    // El mapa buscará la calle apenas el usuario termine de escribir y salga del campo de texto (evento 'blur')
+    campoDireccion.addEventListener('blur', buscarDireccionEnMapa);
+    campoComuna.addEventListener('blur', buscarDireccionEnMapa);
+
 </script>
 
 {% endblock contenido %}
