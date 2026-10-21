@@ -4,28 +4,64 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+    html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    height: 100%;
+    overflow: hidden !important;
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* IE/Edge antiguo */
+    }
+
+    * {
+    scrollbar-width: none;          /* Firefox, todos los elementos */
+    -ms-overflow-style: none;
+    }
+
+    *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    }
+
     .mapa-fondo {
         flex: 1;
         position: relative;
+        width: 100%;
+        min-height: 0;
+        overflow: hidden;
+        contain: layout paint size;
+        background-color: var(--fondo-pantalla);
+    .leaflet-container {
+        background-color: var(--fondo-pantalla) !important;
+    }
+    
+    #mi-mapa {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        contain: strict;   /* nada de Leaflet puede afectar el layout de afuera */
+}
+
     }
     .inferior-panel {
         background-color: var(--fondo-pantalla);
         border-radius: 26px 26px 0 0 ;
         box-shadow: 0 -10px 30px rgba(0,0,0,0.5); 
-        padding: 20px;
+        padding: 20px 20px 34px 20px;
         position: fixed;
         left: 0;
         right: 0;
         bottom: 0;
         z-index: 2000;
-        transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), height 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        transition: height 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
     }    
     .inferior-panel.low {
-        height: 178px;
-        text-align: center;
+        height: 270px;
+        justify-content: flex-start;
     }
     .inferior-panel.low .content-hidden {
         display: none !important;
@@ -35,15 +71,34 @@
         display: flex !important;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        flex: 1;
+        width: 100%;
+        margin-top: 10px;
+        flex: none;
+        
+    }
+    .inferior-panel.low .tx {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        margin-top: 30px;
+    }
+    .inferior-panel.low .tx b {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+    }
+    .inferior-panel.low .tx span {
+        color: var(--texto-secundario);
+        font-size: 16px;
+    }
+    .inferior-panel.low .principal-btn {
+        margin-top: 0; 
     }
 
     .inferior-panel.expanded-panel {
-        top: 108px !important;
-        height: calc(100vh - 108px) !important;
-        padding-bottom: 34px;
+        height: 65vh !important; 
+        justify-content: flex-start;
     }
     
     .inferior-panel.expanded-panel #header-contraido {
@@ -59,7 +114,14 @@
     
     .content-hidden {
         display: none;
-
+    }
+    .report-scroll { 
+        flex: 1; 
+        overflow-y: auto; 
+        display: flex; 
+        flex-direction: column; 
+        min-height: 0; 
+        padding-bottom: 15px;
     }
     .header-expandido-centrado {
         display: flex;
@@ -85,7 +147,7 @@
         color: var(--texto-sobre-amarillo);
         border: none;
         width: 100%;
-        height: 52px;
+        height: 58px;
         border-radius: 16px;
         font-size: 17px;
         font-weight: bold;
@@ -95,7 +157,7 @@
         justify-content: center;
         gap: 8px;
         flex: none;
-        margin-top: auto;
+        margin-top: auto !important;
     }
 
     .catch-line {
@@ -119,11 +181,10 @@
         gap: 9px;
         padding: 6px 14px 6px 6px;
         border-radius: 20px;
-        background-color: rgba(23,28,35,0.84);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        box-shadow: 0 6px 18px -8px rgba(0,0,0,0.3);
+        background-color: var(--fondo-tarjeta); 
+        color: var(--texto-principal); 
     }
+    
     .avatar-usuario {
         width: 28px;
         height: 28px;
@@ -135,6 +196,22 @@
         justify-content: center;
         font-size: 13px;
         font-weight: bold;
+    }
+    .rbtn { 
+        width: 44px; 
+        height: 44px; 
+        border-radius: 50%; 
+        display: grid; 
+        place-items: center; 
+        background-color: var(--fondo-tarjeta); /* Cambiado al color dinámico */
+        color: var(--texto-principal); /* Color de ícono dinámico */
+        box-shadow: 0 6px 18px -8px rgba(0,0,0,0.35); 
+        cursor: pointer; 
+        transition: all 0.2s ease; 
+    }
+    .rbtn.on { 
+        background-color: var(--amarillo-vial) !important; 
+        color: #1b2430 !important; 
     }
     .chips {
         display: flex;
@@ -155,18 +232,52 @@
         background: var(--texto-principal);
         color: var(--fondo-pantalla);
     }
+    .legpop2 { 
+        position: absolute; 
+        left: 16px; 
+        right: 16px; 
+        bottom: 290px;
+        z-index: 1000; 
+        padding: 16px; 
+        border-radius: 20px; 
+        background-color: var(--fondo-tarjeta); 
+        color: var(--texto-principal);
+        box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5); 
+        flex-direction: column; 
+        gap: 12px; 
+    }
+    .legpop2 .lh b { font-weight: 700; color: var(--texto-principal); }
+    .legpop2 .lrow { display: flex; align-items: flex-end; justify-content: space-around; padding: 12px 0; border-radius: 14px; background: var(--fondo-pantalla); }
+    .legpop2 .li { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 64px; }
+    .legpop2 .mk { border-radius: 50%; display: grid; place-items: center; }
+    .legpop2 .mk.s { width: 24px; height: 24px; }
+    .legpop2 .mk.m { width: 30px; height: 30px; }
+    .legpop2 .mk.l { width: 38px; height: 38px; }
+    .legpop2 .mk svg { width: 62%; height: 62%; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    
+    .legpop2 .ll { 
+        font-size: 13px; 
+        font-weight: 600; 
+        color: var(--texto-principal); 
+    }
+    .legpop2 p { 
+        margin: 0; 
+        font-size: 13px; 
+        color: var(--texto-secundario); 
+        line-height: 1.35; 
+    }
+    
+    .rbtn { transition: all 0.2s ease; }
+    .rbtn.on { background-color: var(--amarillo-vial) !important; color: #1b2430 !important; }
     .report-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
     .group { background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(27,36,48,.04); }
-    
     .rep { display: flex; align-items: center; gap: 12px; padding: 11px 12px; position: relative; cursor: pointer; }
     .rep + .rep::before { content: ""; position: absolute; top: 0; left: 80px; right: 0; height: 0.5px; background: var(--texto-secundario); opacity: 0.2; }
-    
     .thumb { width: 52px; height: 52px; border-radius: 12px; overflow: hidden; flex: none; background: #3a3d42; }
     .rep .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
     .rep .t b { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .rep .t span.a { font-size: 12.5px; color: var(--texto-secundario); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .rep .chev { width: 8px; height: 14px; flex: none; stroke: var(--texto-secundario); stroke-width: 2.2; stroke-linecap: round; fill: none; }
-    
     .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-top: 2px; }
     .tag i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
     .tag.o { color: #f08a24; } .tag.o i { background: #f08a24; } 
@@ -176,11 +287,16 @@
     .empty .ic { width: 64px; height: 64px; border-radius: 50%; background: var(--fondo-tarjeta); display: grid; place-items: center; margin-bottom: 4px; color: var(--texto-secundario); }
     .empty h3 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
     .empty p { margin: 0; font-size: 14px; color: var(--texto-secundario); line-height: 1.4; }
+    #mi-mapa.modo-satelite .leaflet-tile,
+    #mi-mapa.modo-satelite .leaflet-layer {
+        filter: none !important;
+        -webkit-filter: none !important;
+    }
 </style>
 <!-- Zona superior (El mapa) -->
 <div class="mapa-fondo">
-    <div id="mi-mapa" style="width: 100%; height: 100%;"></div>
-    <!-- saludo flotante -->
+    <div id="mi-mapa" ></div>
+        <!-- saludo flotante -->
     <div class="saludo-flotante">
         {% if user.is_authenticated %}
             <span class="avatar-usuario">{{ saludo|first|upper }}</span>
@@ -191,15 +307,33 @@
         {% endif %}
     </div>
     <!--Botones flotantes (Lupa, Capas, Info) -->
-    <div class="map-btns" style="position: absolute; top: 52px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
-        <div role="button" aria-label="Vista satélite" style="width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background-color: rgba(23,28,35,0.84); backdrop-filter: blur(16px); box-shadow: 0 6px 18px -8px rgba(0,0,0,0.35); color: white; cursor: pointer;">
+    <div id="contenedor-botones-mapa" class="map-btns" style="position: absolute; top: 52px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
+        
+        <div id="btn-satelite" class="rbtn" role="button" aria-label="Vista satélite">
             <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 16.5l9 5 9-5"/></svg>
         </div>
-        <div role="button" aria-label="Qué significan los pines" style="width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background-color: rgba(23,28,35,0.84); backdrop-filter: blur(16px); box-shadow: 0 6px 18px -8px rgba(0,0,0,0.35); color: white; cursor: pointer;">
+        
+        <div id="btn-leyenda" class="rbtn" role="button" aria-label="Qué significan los pines">
             <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
         </div>
+        
     </div>
 </div>
+    <!-- Popup de leyenda-->
+    <div id="leyenda-popup" class="legpop2" style="display: none;">
+        <div class="lh"><b>Así se leen los pines</b></div>
+        <div class="lrow">
+            <div class="li">
+                <span class="mk s" style="background: #1b2430"><svg viewBox="0 0 24 24" style="stroke: #ffc20e;"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 12h16M12 5v14"/></svg></span>
+                <span class="ll">Media</span>
+            </div>
+            <div class="li">
+                <span class="mk l" style="background:#1b2430"><svg viewBox="0 0 24 24" style="stroke: #ffc20e;"><circle cx="12" cy="9" r="6"/><path d="M12 15v6.5"/></svg></span>
+                <span class="ll">Alta</span>
+            </div>
+        </div>
+        <p>El tamaño indica la gravedad del problema; el ícono, de qué tipo es.</p>
+    </div>
 
 <!-- Zona inferior (El menú) -->
 <div class="inferior-panel low" id="panel-inferior">
@@ -276,64 +410,129 @@
     document.addEventListener('DOMContentLoaded', function() {
         const panel = document.getElementById('panel-inferior');
         const headerContraido = document.getElementById('header-contraido');
+        const contenidoExpandido = document.getElementById('contenido-expandido');
+        const agarraderaExpandida = panel.querySelector('#contenido-expandido .catch-line');
 
-        function togglePanel(e) {
-            e.stopPropagation();
+        function togglePanel() {
             panel.classList.toggle('expanded-panel');
             panel.classList.toggle('low');
+            if (panel.classList.contains('expanded-panel')) {
+                const btnLeyenda = document.getElementById('btn-leyenda');
+                const popupLeyenda = document.getElementById('leyenda-popup');
+                
+                if (btnLeyenda && popupLeyenda) {
+                    btnLeyenda.classList.remove('on');
+                    popupLeyenda.style.display = 'none';
+                }
+            }
         }
 
-        // Abre o cierra al hacer clic en el encabezado contraído
-        headerContraido.addEventListener('click', togglePanel);
-        
-        // Cierra o abre al hacer clic en la barrita (agarradera) del panel expandido
-        const agarraderaExpandida = panel.querySelector('#contenido-expandido .catch-line');
-        if(agarraderaExpandida) {
-            agarraderaExpandida.addEventListener('click', togglePanel);
-        }
+        if(headerContraido) headerContraido.addEventListener('click', togglePanel);
+        if(agarraderaExpandida) agarraderaExpandida.addEventListener('click', togglePanel);
+
+        let toqueInicioY = 0;
+
+        panel.addEventListener('touchstart', function(e) {
+            toqueInicioY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        panel.addEventListener('touchend', function(e) {
+            let toqueFinY = e.changedTouches[0].screenY;
+            let diferencia = toqueInicioY - toqueFinY; // Positivo = arrastre hacia arriba
+
+            if (diferencia > 40 && panel.classList.contains('low')) {
+                togglePanel();
+            } 
+            else if (diferencia < -40 && panel.classList.contains('expanded-panel')) {
+                const haciendoScrollEnLista = e.target.closest('.report-scroll');
+                
+                if (!haciendoScrollEnLista) {
+                    togglePanel();
+                }
+            }
+        }, {passive: true});
     });
 </script>
+
 
 <script>
-    // 1. Inicializar el mapa (Latitud, Longitud, Nivel de Zoom)
-    var mapa = L.map('mi-mapa', {
-        zoomControl: false // Oculta los botones +/- para que parezca app nativa
-    }).setView([-33.4489, -70.6693], 14);
+    document.addEventListener('DOMContentLoaded', function() {
+        // capas del mapa
+        var capaEstandar = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        });
 
-    // 2. Cargar el diseño premium oscuro de las calles
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        referrerPolicy: 'strict-origin-when-cross-origin'
-    }).addTo(mapa);
-    // 4. Dibujar el punto azul de "Mi Ubicación"
-    L.circleMarker([-33.4489, -70.6693], {
-        color: '#ffffff',
-        weight: 3,
-        fillColor: '#3478f6',
-        fillOpacity: 1,
-        radius: 7
-    }).addTo(mapa);
+        var capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        });
 
-    // 5. Dibujar un punto por cada reporte, del color que dice la leyenda.
-    const COLOR_ESTADO = {
-        recibido: 'var(--amarillo-vial)',
-        en_revision: '#f08a24',
-        atendido: '#2fa66a',
-        descartado: '#98a2b3'
-    };
 
-    const puntos = JSON.parse(document.getElementById('datos-reportes').textContent);
+        var mapa = L.map('mi-mapa', {
+            zoomControl: false,
+            layers: [capaEstandar] 
+        }).setView([-33.4489, -70.6693], 14);
 
-    puntos.forEach(function (p) {
-        L.circleMarker([p.lat, p.lon], {
+        // Pin de prueba
+        L.circleMarker([-33.4489, -70.6693], {
             color: '#ffffff',
-            weight: 2,
-            fillColor: COLOR_ESTADO[p.estado] || '#98a2b3',
+            weight: 3,
+            fillColor: '#3478f6',
             fillOpacity: 1,
-            radius: 8
-        })
-        .bindPopup('<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + p.etiqueta)
-        .addTo(mapa);
+            radius: 7
+        }).addTo(mapa);
+        setTimeout(function() { mapa.invalidateSize(); }, 100);
+
+
+        const btnSatelite = document.getElementById('btn-satelite');
+        const btnLeyenda = document.getElementById('btn-leyenda');
+        const popupLeyenda = document.getElementById('leyenda-popup');
+        const contenedorBotones = document.getElementById('contenedor-botones-mapa');
+        let esSatelite = false;
+
+        if (contenedorBotones) {
+            L.DomEvent.disableClickPropagation(contenedorBotones);
+        }
+        if (popupLeyenda) {
+            L.DomEvent.disableClickPropagation(popupLeyenda);
+        }
+
+        //cambio de mapa Satelital / Normal
+        if (btnSatelite) {
+            btnSatelite.addEventListener('click', function(e) {
+                e.preventDefault();
+                esSatelite = !esSatelite;
+                
+                if (esSatelite) {
+                    mapa.removeLayer(capaEstandar);
+                    mapa.addLayer(capaSatelite);
+                    btnSatelite.classList.add('on');
+                    // Agrega la clase para quitar el filtro oscuro
+                    document.getElementById('mi-mapa').classList.add('modo-satelite');
+                } else {
+                    mapa.removeLayer(capaSatelite);
+                    mapa.addLayer(capaEstandar);
+                    btnSatelite.classList.remove('on');
+                    // Quita la clase para que el mapa de calles vuelva a ser oscuro
+                    document.getElementById('mi-mapa').classList.remove('modo-satelite');
+                }
+            });
+        }
+
+        // popup de la Leyenda
+        if (btnLeyenda) {
+            btnLeyenda.addEventListener('click', function(e) {
+                e.preventDefault();
+                btnLeyenda.classList.toggle('on');
+                
+                if (popupLeyenda.style.display === 'none' || popupLeyenda.style.display === '') {
+                    popupLeyenda.style.display = 'flex';
+                } else {
+                    popupLeyenda.style.display = 'none';
+                }
+            });
+        }
     });
 </script>
+
+
 {% endblock contenido %}
