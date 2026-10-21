@@ -59,3 +59,47 @@ python manage.py createsuperuser
 | `/admin/` | Administración de Django |
 
 Las plantillas están todas en `reportes/templates/reportes/`.
+
+
+## Cómo limpiar la base de datos (Solución al error del mapa en Inicio)
+
+¿Por qué hacer esto?
+Durante las pruebas de la pantalla de ubicación, se guardaron reportes sin coordenadas GPS (campos de latitud y longitud vacíos). Cuando la pantalla de inicio (inicio.html) intenta dibujar esos puntos invisibles usando Leaflet, el mapa colapsa y deja de mostrar todos los pines.
+
+Para que el mapa vuelva a funcionar, debemos eliminar esos reportes corruptos de la base de datos siguiendo estos pasos:
+
+Paso a paso:
+
+1. Detener el servidor: Ve a la terminal de VS Code donde está corriendo Django y presiona Ctrl + C.
+
+2. Abrir la consola de Django: Escribe el siguiente comando para entrar al entorno interactivo (verás que aparecen tres flechas >>>):
+
+```
+python manage.py shell
+```
+
+3. Importar la tabla de Reportes: Una vez dentro de la consola, escribe esto y presiona Enter:
+
+```
+from reportes.models import Reporte
+```
+
+4. Borrar todos los registros: Ejecuta el comando de eliminación masiva. (La consola te devolverá un número confirmando cuántos reportes borró).
+
+```
+Reporte.objects.all().delete()
+```
+
+5. Salir de la consola: Escribe el comando para cerrar el entorno interactivo y presiona Enter:
+
+```
+exit()
+```
+
+6. Reiniciar el proyecto: Vuelve a levantar el servidor normalmente:
+
+```
+python manage.py runserver
+```
+
+> **Nota:** *Ya se agregó un seguro en el código de ubicacion.html para forzar que el formulario siempre capture las coordenadas exactas.*
