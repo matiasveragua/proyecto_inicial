@@ -1,0 +1,145 @@
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+<style>
+    /* Variables de color basadas en la captura (Modo oscuro) */
+    .panel-org {--bg-panel: #0e1217; --card-bg: #171c23; --text-main: #f2f3f5; --text-muted: #9aa1ad; --border-color: rgba(255, 255, 255, 0.1); --fill-color: rgba(255, 255, 255, 0.08); --amarillo: #ffc20e; --rojo-alerta: #ff6a5e; --naranja: #f08a24; --azul: #3478f6; background-color: var(--bg-panel); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; min-height: 100vh; display: flex; flex-direction: column; gap: 20px;}
+
+    /* Cabecera */
+    .panel-org .dh { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel-org .dh h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; color: var(--text-main); }
+    .panel-org .dh .sub { font-size: 13px; color: var(--text-muted); }
+    
+    /* Botones Tabla / Mapa */
+    .panel-org .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--fill-color); border-radius: 10px; padding: 4px; width: 170px; }
+    .panel-org .seg span { min-height: 34px; display: grid; place-items: center; font-size: 13px; font-weight: 600; border-radius: 8px; color: var(--text-muted); cursor: pointer; }
+    .panel-org .seg span.on { background: #2b323c; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+    /* Tarjetas KPI */
+    .panel-org .dkpis { display: flex; gap: 12px; }
+    .panel-org .dkpi { flex: 1; background: var(--card-bg); border-radius: 12px; padding: 12px 16px; display: flex; align-items: baseline; gap: 8px; border: 1px solid var(--border-color); }
+    .panel-org .dkpi b { font-size: 24px; font-weight: 800; color: var(--text-main); } 
+    .panel-org .dkpi span { font-size: 14px; color: var(--text-muted); }
+
+    /* Filtros y Buscador */
+    .panel-org .dfil { display: flex; gap: 10px; align-items: center; }
+    .panel-org .fchip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; font-size: 13.5px; font-weight: 600; border-radius: 18px; background: var(--fill-color); color: var(--text-main); cursor: pointer; }
+    .panel-org .fchip svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+    .panel-org .sp2 { flex: 1; }
+    .panel-org .dsrch { display: flex; align-items: center; gap: 8px; height: 38px; width: 250px; padding: 0 14px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--border-color); font-size: 13.5px; color: var(--text-muted); }
+    .panel-org .dsrch svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+    /* Tabla */
+    .panel-org .dtable { background: var(--card-bg); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--border-color); }
+    .panel-org .dtr { display: grid; gap: 10px; align-items: center; padding: 0 20px; min-height: 60px; border-top: 1px solid var(--border-color); font-size: 14px; grid-template-columns: 80px 60px minmax(0,1.7fr) 70px 70px 50px 120px 100px; }
+    .panel-org .dtr.h { min-height: 44px; font-size: 13px; font-weight: 700; color: var(--text-muted); border-top: 0; background: var(--fill-color); }
+    .panel-org .dtr.sel { background: color-mix(in srgb, var(--amarillo) 8%, var(--card-bg)); }
+    .panel-org .dtr b { font-weight: 700; color: var(--text-main); }
+    .panel-org .dtr .s2 { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+    
+    /* Etiquetas de Gravedad y Estado */
+    .panel-org .gv { display: inline-flex; align-items: center; justify-content: center; min-width: 60px; height: 26px; border-radius: 13px; font-size: 12.5px; font-weight: 700; padding: 0 10px; }
+    .panel-org .gv.a { background: var(--rojo-alerta); color: #fff; } 
+    .panel-org .gv.m { background: var(--fill-color); color: var(--text-main); } 
+    .panel-org .gv.b { background: var(--fill-color); color: var(--text-muted); opacity: 0.7; }
+    
+    .panel-org .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; }
+    .panel-org .tag i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .panel-org .tag.o { color: var(--naranja); } .panel-org .tag.o i { background: var(--naranja); }
+    .panel-org .tag.b { color: var(--azul); } .panel-org .tag.b i { background: var(--azul); }
+</style>
+
+<div class="panel-org">
+    
+    <!-- Cabecera -->
+    <div class="dh">
+        <div>
+            <h2>Puntos críticos</h2>
+            <span class="sub">Agrupados por ubicación y categoría · actualizado hoy, 9:41</span>
+        </div>
+        <div class="seg">
+            <span class="on">Tabla</span>
+            <span>Mapa</span>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="dkpis">
+        <div class="dkpi"><b>7</b><span>Recibidos</span></div>
+        <div class="dkpi"><b>9</b><span>En revisión</span></div>
+        <div class="dkpi"><b>24</b><span>Atendidos</span></div>
+    </div>
+
+    <!-- Filtros y Buscador -->
+    <div class="dfil">
+        <span class="fchip">Estado <svg viewBox="0 0 10 10"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></span>
+        <span class="fchip">Categoría <svg viewBox="0 0 10 10"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></span>
+        <span class="fchip">Gravedad <svg viewBox="0 0 10 10"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></span>
+        <span class="fchip">Antigüedad <svg viewBox="0 0 10 10"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></span>
+        
+        <span class="sp2"></span>
+        
+        <span class="dsrch">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+            Buscar dirección o comuna
+        </span>
+    </div>
+
+    <!-- Tabla de datos -->
+    <div class="dtable">
+        <div class="dtr h">
+            <span>Gravedad</span><span>Puntaje</span><span>Punto</span><span>Reportes</span><span>Confirm.</span><span>Días</span><span>Estado</span><span>Responsable</span>
+        </div>
+        
+        <!-- Fila 1 (Seleccionada) -->
+        <div class="dtr sel">
+            <span class="gv a">Alta</span>
+            <b>63</b>
+            <span><b>Bache en calzada</b><span class="s2">Av. V. Mackenna 3900</span></span>
+            <span>3</span><span>14</span><span>12</span>
+            <span class="tag o"><i></i>En revisión</span>
+            <span>M. Rojas</span>
+        </div>
+        
+        <!-- Fila 2 -->
+        <div class="dtr">
+            <span class="gv a">Alta</span>
+            <b>60</b>
+            <span><b>Semáforo defectuoso</b><span class="s2">C. Valdovinos 450</span></span>
+            <span>2</span><span>9</span><span>6</span>
+            <span class="tag b"><i></i>Recibido</span>
+            <span>Sin asignar</span>
+        </div>
+        
+        <!-- Fila 3 -->
+        <div class="dtr">
+            <span class="gv m">Media</span>
+            <b>26</b>
+            <span><b>Árbol con riesgo de caída</b><span class="s2">Departamental 1250</span></span>
+            <span>1</span><span>3</span><span>4</span>
+            <span class="tag o"><i></i>En revisión</span>
+            <span>J. Pérez</span>
+        </div>
+        
+        <!-- Fila 4 -->
+        <div class="dtr">
+            <span class="gv m">Media</span>
+            <b>22</b>
+            <span><b>Cables peligrosos</b><span class="s2">Los Plátanos 220</span></span>
+            <span>1</span><span>2</span><span>3</span>
+            <span class="tag b"><i></i>Recibido</span>
+            <span>Sin asignar</span>
+        </div>
+        
+        <!-- Fila 5 -->
+        <div class="dtr">
+            <span class="gv b">Baja</span>
+            <b>4</b>
+            <span><b>Vereda dañada</b><span class="s2">Mackenna 3880</span></span>
+            <span>1</span><span>1</span><span>2</span>
+            <span class="tag b"><i></i>Recibido</span>
+            <span>Sin asignar</span>
+        </div>
+    </div>
+</div>
+{% endblock contenido %}
