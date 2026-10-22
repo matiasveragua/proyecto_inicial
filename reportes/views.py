@@ -180,3 +180,6 @@ def mis_reportes(request):
 @login_required
 def mas_detalle(request):
     return render(request, 'reportes/mas_detalle.html')
+
+def panel_municipal(request):
+    return render(request, 'reportes/panel_municipal.html')

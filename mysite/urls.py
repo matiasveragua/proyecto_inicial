@@ -24,6 +24,7 @@ urlpatterns = [
     path('reportar/', views.reportar, name='reportar'),
     path('mis-reportes/', views.mis_reportes, name='mis_reportes'),
     path('mas-detalle/', views.mas_detalle, name='mas_detalle'),
+    path('panel-municipal/', views.panel_municipal, name='panel_municipal'),
 
     path('accounts/registro/', views.registro, name='registro'),
     # Trae gratis /accounts/login/ y /accounts/logout/ de Django.

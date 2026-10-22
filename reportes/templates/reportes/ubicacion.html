@@ -292,7 +292,7 @@
     // El mapa buscará la calle apenas el usuario termine de escribir y salga del campo de texto (evento 'blur')
     campoDireccion.addEventListener('blur', buscarDireccionEnMapa);
     campoComuna.addEventListener('blur', buscarDireccionEnMapa);
-    
+
 
     // Seguro contra errores: Antes de que el formulario viaje a Django, 
     // lo atrapamos y le forzamos la posición exacta en la que haya quedado el pin.
@@ -300,7 +300,8 @@
         var posicionFinal = marcador.getLatLng();
         campoLat.value = posicionFinal.lat.toFixed(6);
         campoLon.value = posicionFinal.lng.toFixed(6);
-    })
+    });
+
 </script>
 
 {% endblock contenido %}
