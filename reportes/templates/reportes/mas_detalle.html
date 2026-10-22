@@ -1,0 +1,135 @@
+
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+
+<style>
+    .pantalla { flex: 1; overflow-y: auto; padding: 52px 16px 28px; display: flex; flex-direction: column; }
+
+    /* Encabezado */
+    .volver { display: inline-flex; align-items: center; gap: 2px; color: var(--amarillo-vial); font-size: 17px; font-weight: 600; text-decoration: none; margin-bottom: 14px; }
+    .pantalla h1 { margin: 0 0 18px; font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
+
+    /* Tarjeta con el resumen del reporte */
+    .resumen { display: flex; align-items: center; gap: 14px; background: var(--fondo-tarjeta); border-radius: 16px; padding: 12px; }
+    .miniatura { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: var(--texto-secundario); flex: none; }
+    .resumen b { display: block; font-size: 16px; }
+    .resumen span { font-size: 13.5px; color: var(--texto-secundario); }
+
+    /* Etiquetas de sección */
+    .etiqueta { font-size: 13px; color: var(--texto-secundario); margin: 22px 0 10px 2px; line-height: 1.4; }
+
+    /* Espacios para fotos */
+    .fotos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .slot { position: relative; aspect-ratio: 1 / 1; border: 1.5px dashed var(--texto-secundario); border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
+    .slot:focus-within { outline: 2px solid var(--amarillo-vial); outline-offset: 2px; }
+    .slot input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .slot .mas { font-size: 30px; color: var(--amarillo-vial); line-height: 1; pointer-events: none; }
+    .slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+    .slot.con-foto { border-style: solid; border-color: transparent; }
+    .slot.con-foto img { display: block; }
+    .slot.con-foto .mas { display: none; }
+    .slot.con-foto input[type="file"] { pointer-events: none; }
+    .quitar { position: absolute; top: 6px; right: 6px; z-index: 2; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,.75); color: #fff; font-size: 14px; line-height: 1; cursor: pointer; display: none; }
+    .slot.con-foto .quitar { display: block; }
+
+    /* Descripción */
+    .caja-texto { background: var(--fondo-tarjeta); border-radius: 14px; padding: 10px 16px 12px; }
+    .caja-texto label { display: block; font-size: 12px; color: var(--texto-secundario); margin-bottom: 4px; }
+    .caja-texto textarea { width: 100%; min-height: 72px; resize: vertical; border: none; outline: none; background: transparent; color: var(--texto-principal); font: inherit; font-size: 16px; }
+    .caja-texto:focus-within { outline: 2px solid var(--amarillo-vial); }
+
+    /* Botones */
+    .acciones { margin-top: auto; padding-top: 28px; display: flex; flex-direction: column; gap: 8px; }
+    .btn { appearance: none; border: 0; height: 52px; border-radius: 16px; width: 100%; font-size: 17px; font-weight: 700; cursor: pointer; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); box-shadow: 0 8px 20px -8px var(--amarillo-vial); }
+    .btn-texto { display: flex; align-items: center; justify-content: center; height: 44px; color: var(--amarillo-vial); font-size: 17px; font-weight: 600; text-decoration: none; }
+</style>
+
+<div class="pantalla">
+
+    <a class="volver" href="{% url 'inicio' %}">
+        <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg>
+        Detalle
+    </a>
+
+    <h1>Más detalle</h1>
+
+    <!-- Resumen del reporte (para back end: pasar "reporte" desde la vista) -->
+    <div class="resumen">
+        {% if reporte.foto %}
+            <img class="miniatura" src="{{ reporte.foto.url }}" alt="">
+        {% else %}
+            <div class="miniatura"></div>
+        {% endif %}
+        <div>
+            <b>{{ reporte.tipo|default:"Bache en calzada" }}</b>
+            <span>{{ reporte.direccion|default:"Av. V. Mackenna 3900" }}</span>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; flex:1;">
+        {% csrf_token %}
+
+        <!-- Fotos adicionales -->
+        <p class="etiqueta">Más fotos (opcional) · evita personas y patentes</p>
+        <div class="fotos">
+            <label class="slot">
+                <input type="file" name="foto1" accept="image/*">
+                <img alt="Foto adicional 1">
+                <span class="mas">+</span>
+                <button type="button" class="quitar" aria-label="Quitar foto 1">✕</button>
+            </label>
+            <label class="slot">
+                <input type="file" name="foto2" accept="image/*">
+                <img alt="Foto adicional 2">
+                <span class="mas">+</span>
+                <button type="button" class="quitar" aria-label="Quitar foto 2">✕</button>
+            </label>
+            <label class="slot">
+                <input type="file" name="foto3" accept="image/*">
+                <img alt="Foto adicional 3">
+                <span class="mas">+</span>
+                <button type="button" class="quitar" aria-label="Quitar foto 3">✕</button>
+            </label>
+        </div>
+
+        <!-- Información adicional -->
+        <p class="etiqueta">Información adicional (opcional)</p>
+        <div class="caja-texto">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" placeholder="Ej.: se agrandó con la lluvia"></textarea>
+        </div>
+
+        <div class="acciones">
+            <button class="btn" type="submit">Enviar detalle</button>
+            <a class="btn-texto" href="{% url 'inicio' %}">Ahora no</a>
+        </div>
+    </form>
+
+</div>
+
+<!-- Vista previa de las fotos y botón para quitarlas -->
+<script>
+    document.querySelectorAll('.slot').forEach(function (slot) {
+        var entrada = slot.querySelector('input[type="file"]');
+        var imagen = slot.querySelector('img');
+        var quitar = slot.querySelector('.quitar');
+
+        entrada.addEventListener('change', function () {
+            var archivo = entrada.files[0];
+            if (!archivo) return;
+            imagen.src = URL.createObjectURL(archivo);
+            slot.classList.add('con-foto');
+        });
+
+        quitar.addEventListener('click', function (evento) {
+            evento.preventDefault();
+            evento.stopPropagation();
+            entrada.value = '';
+            imagen.removeAttribute('src');
+            slot.classList.remove('con-foto');
+        });
+    });
+</script>
+
+{% endblock contenido %}
