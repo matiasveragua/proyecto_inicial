@@ -177,3 +177,6 @@ def mis_reportes(request):
         .order_by("-fecha_creacion")
     )
     return render(request, 'reportes/mis_reportes.html', {"reportes": reportes})
+@login_required
+def mas_detalle(request):
+    return render(request, 'reportes/mas_detalle.html')
