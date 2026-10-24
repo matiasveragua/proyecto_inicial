@@ -182,4 +182,9 @@ def mas_detalle(request):
     return render(request, 'reportes/mas_detalle.html')
 
 def panel_municipal(request):
-    return render(request, 'reportes/panel_municipal.html')
+    reportes_obtenidos = Reporte.objects.all()
+    
+    contexto = {
+        'reportes': reportes_obtenidos
+    }
+    return render(request, 'reportes/panel_municipal.html', contexto)
