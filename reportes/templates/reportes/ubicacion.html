@@ -219,15 +219,52 @@
     const campoComuna = document.getElementById('id_comuna');
     const pista = document.querySelector('.hint');
 
-    // Si el usuario arrastra el pin manualmente, actualizamos las coordenadas
+    // Función de Geocodificación Inversa (Transforma Lat/Lon a Texto de Dirección)
+    function obtenerDireccionDeCoordenadas(lat, lon) {
+        let urlReverse = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`;
+        
+        fetch(urlReverse)
+            .then(res => res.json())
+            .then(datos => {
+                if (datos && datos.address) {
+                    // Extraer calle (puede venir bajo diferentes nombres en OpenStreetMap)
+                    let calle = datos.address.road || datos.address.pedestrian || datos.address.path || "";
+                    let numero = datos.address.house_number ? " " + datos.address.house_number : "";
+                    
+                    // Extraer comuna
+                    let comuna = datos.address.city || datos.address.town || datos.address.village || datos.address.suburb || datos.address.county || "";
+
+                    // Llenar el input de Dirección
+                    if (calle !== "") {
+                        campoDireccion.value = calle + numero;
+                    } else if (datos.display_name) {
+                        // Respaldo por si no hay calle clara (ej. un parque grande)
+                        campoDireccion.value = datos.display_name.split(',')[0]; 
+                    }
+                    
+                    // Llenar el input de Comuna
+                    if (comuna !== "") {
+                        campoComuna.value = comuna;
+                    }
+                    
+                    pista.textContent = 'Puedes arrastrar el pin si quieres ser más exacto';
+                }
+            })
+            .catch(e => console.log("Error obteniendo la dirección de las coordenadas"));
+    }
+
+    // Si el usuario arrastra el pin manualmente, actualizamos las coordenadas y el TEXTO
     marcador.on('dragend', function() {
         var posicion = marcador.getLatLng();
         campoLat.value = posicion.lat.toFixed(6);
         campoLon.value = posicion.lng.toFixed(6);
-        pista.textContent = 'Pin ajustado manualmente';
+        pista.textContent = 'Ajustando dirección...';
+        
+        // Llamamos a la nueva función
+        obtenerDireccionDeCoordenadas(posicion.lat, posicion.lng);
     });
 
-    // Botón de GPS: Mueve el mapa y el pin a tu ubicación física
+    // Botón de GPS: Mueve el mapa, el pin a tu ubicación física y actualiza el TEXTO
     btnUbicacion.addEventListener('click', function () {
         if (!navigator.geolocation) return;
         pista.textContent = 'Buscando tu ubicación...';
@@ -243,7 +280,10 @@
                 mapa.setView([lat, lon], 16); // Hace zoom a tu calle
                 marcador.setLatLng([lat, lon]); // Mueve el pin
                 
-                pista.textContent = 'Ubicación fijada con GPS';
+                pista.textContent = 'Ubicación fijada. Detectando calle...';
+                
+                // Llamamos a la nueva función
+                obtenerDireccionDeCoordenadas(lat, lon);
                 btnUbicacion.disabled = false;
             },
             function (error) {
@@ -292,7 +332,7 @@
     // El mapa buscará la calle apenas el usuario termine de escribir y salga del campo de texto (evento 'blur')
     campoDireccion.addEventListener('blur', buscarDireccionEnMapa);
     campoComuna.addEventListener('blur', buscarDireccionEnMapa);
-
+    
 
     // Seguro contra errores: Antes de que el formulario viaje a Django, 
     // lo atrapamos y le forzamos la posición exacta en la que haya quedado el pin.
@@ -300,8 +340,7 @@
         var posicionFinal = marcador.getLatLng();
         campoLat.value = posicionFinal.lat.toFixed(6);
         campoLon.value = posicionFinal.lng.toFixed(6);
-    });
-
+    })
 </script>
 
 {% endblock contenido %}
