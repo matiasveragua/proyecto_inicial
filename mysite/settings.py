@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-pl^(-=^mqjp-&+ru-$c3^spr88obydp%8bd=1)#we=x%!7%=%$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -110,6 +110,15 @@ TIME_ZONE = 'America/Santiago'
 USE_I18N = True
 
 USE_TZ = True
+
+
+# Django manda por defecto Referrer-Policy: same-origin, y con esa politica el
+# navegador no envia Referer a otro dominio. OpenStreetMap exige uno en su
+# politica de uso de tiles y, si no llega, devuelve una imagen que dice
+# "Access blocked" en vez del mapa. Con strict-origin-when-cross-origin se
+# envia solo el origen (sin la ruta), que es lo que pide OSM y lo que usan los
+# navegadores por defecto.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 
 # Static files (CSS, JavaScript, Images)
