@@ -65,6 +65,45 @@
     .mapa-contenedor { display: none; height: 65vh; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: var(--card-bg); color-scheme: light;}
     .mapa-contenedor.activo { display: block; }
 
+    /* Efecto hover para que las filas de la tabla parezcan botones */
+    .panel-org .dtable .dtr:not(.h) { cursor: pointer; transition: background 0.2s; }
+    .panel-org .dtable .dtr:not(.h):hover { background: rgba(255, 255, 255, 0.04); }
+
+    /* Panel Lateral (Offcanvas) */
+    .panel-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 998; display: none; opacity: 0; transition: opacity 0.3s ease; }
+    .panel-overlay.activo { display: block; opacity: 1; }
+
+    .side-panel { position: fixed; top: 0; right: -480px; width: 420px; max-width: 100%; height: 100vh; background: #13181f; border-left: 1px solid var(--border-color); z-index: 999; transition: right 0.3s ease; display: flex; flex-direction: column; overflow-y: auto; box-shadow: -4px 0 24px rgba(0,0,0,0.4); padding: 24px; color: var(--text-main); }
+    .side-panel.activo { right: 0; }
+
+    /* Botón cerrar y Cabecera */
+    .side-panel .btn-close { position: absolute; top: 24px; right: 24px; width: 32px; height: 32px; border-radius: 50%; background: var(--fill-color); border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .side-panel .btn-close:hover { background: #2b323c; color: #fff; }
+    .side-panel h3 { font-size: 22px; font-weight: 800; margin: 0 0 4px 0; padding-right: 30px;}
+    .side-panel .sub { font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px; }
+
+    /* Imágenes de ejemplo */
+    .side-panel .imgs { display: flex; gap: 12px; margin-bottom: 24px; overflow-x: auto; }
+    .side-panel .imgs .img-box { width: 120px; height: 80px; border-radius: 10px; background: #232a35; flex: none; border: 1px solid var(--border-color); }
+
+    /* Lista de detalles */
+    .side-panel .d-list { display: flex; flex-direction: column; border-top: 1px solid var(--border-color); margin-bottom: 24px; }
+    .side-panel .d-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+    .side-panel .d-row .lbl { color: var(--text-muted); }
+    .side-panel .d-row .val { font-weight: 600; color: var(--text-main); }
+    .side-panel .s-title { font-size: 13.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; }
+
+    /* Selector de Estados estilo Pestañas */
+    .state-switch { display: flex; background: var(--fill-color); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+    .state-switch label { flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 8px; transition: 0.2s;}
+    .state-switch input[type="radio"] { display: none; }
+    .state-switch input[type="radio"]:checked + label { background: #2b323c; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+    /* Caja de texto y Botón Guardar */
+    .side-panel textarea { width: 100%; background: var(--fill-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; color: var(--text-main); font-size: 14px; font-family: inherit; resize: vertical; min-height: 90px; margin-bottom: 24px; outline: none; }
+    .side-panel textarea:focus { border-color: var(--amarillo); }
+    .side-panel .btn-save { background: var(--amarillo); color: #171c23; border: none; border-radius: 12px; height: 48px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s;}
+    .side-panel .btn-save:hover { filter: brightness(1.1); }
 </style>
 
 <div class="panel-org">
@@ -141,7 +180,16 @@
             </div>
             
             {% for reporte in reportes %}
-            <div class="dtr">
+            <div class="dtr" 
+                data-categoria="{{ reporte.categoria.nombre }}"
+                data-direccion="{{ reporte.ubicacion.direccion_texto }}, {{ reporte.ubicacion.comuna }}"
+                data-gravedad="{{ reporte.categoria.gravedad_referencial|default:'Baja' }}"
+                data-confirmaciones="{{ reporte.confirmacion_set.count }}"
+                data-dias="{{ reporte.dias_antiguedad }}"
+                data-estado="{{ reporte.estado_actual }}"
+                data-foto="{% if reporte.foto %}{{ reporte.foto.url }}{% endif %}"
+                onclick="abrirPanelDetalle(this)">
+
                 {% if reporte.categoria.gravedad_referencial == 'Alta' %}
                     <span class="gv a">Alta</span>
                 {% elif reporte.categoria.gravedad_referencial == 'Media' %}
@@ -185,6 +233,70 @@
         <div id="mi-mapa-panel" class="darkreader-ignore" style="width: 100%; height: 100%; z-index: 1;"></div>
     </div>
     
+    <!-- Fondo oscuro al abrir el panel -->
+    <div class="panel-overlay" id="panel-overlay" onclick="cerrarPanelDetalle()"></div>
+
+    <!-- Panel Lateral de Detalles -->
+    <div class="side-panel" id="panel-detalle">
+        <button class="btn-close" onclick="cerrarPanelDetalle()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        
+        <h3 id="det-categoria">Categoría</h3>
+        <div class="sub" id="det-direccion">Dirección</div>
+
+        <!-- Cajas de fotos referenciales -->
+        <div class="imgs" id="det-fotos">
+            <div class="img-box"></div>
+            <div class="img-box"></div>
+            <div class="img-box"></div>
+        </div>
+
+        <div class="d-list">
+            <div class="d-row">
+                <span class="lbl">Gravedad</span>
+                <span class="val" id="det-gravedad">Alta</span>
+            </div>
+            <div class="d-row">
+                <span class="lbl">Confirmaciones</span>
+                <span class="val" id="det-confirmaciones">0 personas</span>
+            </div>
+            <div class="d-row">
+                <span class="lbl">Abierto hace</span>
+                <span class="val" id="det-dias">0 días</span>
+            </div>
+            <div class="d-row">
+                <span class="lbl">Responsable</span>
+                <span class="val">
+                    <select style="background:transparent; border:none; color:inherit; font-weight:inherit; outline:none; text-align:right; appearance:none; cursor:pointer;">
+                        <option>Sin asignar</option>
+                        <option>M. Rojas</option>
+                        <option>C. Valenzuela</option>
+                    </select>
+                </span>
+            </div>
+        </div>
+
+        <div class="s-title">Estado</div>
+        <div class="state-switch">
+            <input type="radio" name="estado_rep" id="st_recibido" value="recibido">
+            <label for="st_recibido">Recibido</label>
+            
+            <input type="radio" name="estado_rep" id="st_revision" value="en_revision">
+            <label for="st_revision">En revisión</label>
+            
+            <input type="radio" name="estado_rep" id="st_atendido" value="atendido">
+            <label for="st_atendido">Atendido</label>
+            
+            <input type="radio" name="estado_rep" id="st_descartado" value="descartado">
+            <label for="st_descartado">Descartado</label>
+        </div>
+
+        <div class="s-title">Comentario para los ciudadanos (obligatorio al descartar)</div>
+        <textarea placeholder="Ej: Cuadrilla reparó el bache el 9 de octubre."></textarea>
+
+        <button class="btn-save" id="det-btn-guardar">Guardar y avisar</button>
+    </div>
 </div>
 
 <script>
@@ -371,6 +483,69 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => mapaPanel.invalidateSize(), 100);
     }
 });
+
+// Funciones para el Panel Lateral de Detalles
+function abrirPanelDetalle(fila) {
+    // Extraer los datos incrustados en la fila
+    const cat = fila.getAttribute('data-categoria');
+    const dir = fila.getAttribute('data-direccion');
+    const grav = fila.getAttribute('data-gravedad');
+    const conf = parseInt(fila.getAttribute('data-confirmaciones')) || 0;
+    const dias = fila.getAttribute('data-dias');
+    const estado = fila.getAttribute('data-estado');
+    const fotoUrl = fila.getAttribute('data-foto');
+
+    // Inyectar textos básicos
+    document.getElementById('det-categoria').innerText = cat;
+    document.getElementById('det-direccion').innerText = `${dir} · ${conf + 1} reportes agrupados`;
+    
+    // Pintar la Gravedad según su nivel
+    let colorGravedad = '#9aa1ad';
+    if (grav === 'Alta') colorGravedad = '#ff6a5e';
+    if (grav === 'Media') colorGravedad = '#f2f3f5';
+    document.getElementById('det-gravedad').innerHTML = `<span style="color:${colorGravedad};">${grav}</span>`;
+
+    // Inyectar números
+    document.getElementById('det-confirmaciones').innerText = `${conf} personas`;
+    document.getElementById('det-dias').innerText = `${dias} días`;
+    
+    let textoAviso = (conf === 0) ? '1 persona' : `${conf + 1} personas`;
+    document.getElementById('det-btn-guardar').innerText = `Guardar y avisar a ${textoAviso}`;
+
+    // Cargar la Foto real en el contenedor
+    const contenedorFotos = document.getElementById('det-fotos');
+    if (fotoUrl && fotoUrl.trim() !== '') {
+        contenedorFotos.innerHTML = `
+            <div class="img-box" style="overflow: hidden;">
+                <img src="${fotoUrl}" alt="Foto del reporte" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+        `;
+    } else {
+        contenedorFotos.innerHTML = `
+            <div class="img-box" style="display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; font-weight: 600;">
+                Sin imagen adjunta
+            </div>
+        `;
+    }
+
+    // Seleccionar automáticamente el estado actual en los botones (Radio)
+    let radioId = 'st_' + (estado === 'en_revision' ? 'revision' : estado);
+    let radioInput = document.getElementById(radioId);
+    if (radioInput) radioInput.checked = true;
+
+    // Mostrar el panel
+    document.getElementById('panel-overlay').classList.add('activo');
+    setTimeout(() => {
+        document.getElementById('panel-detalle').classList.add('activo');
+    }, 10);
+}
+
+function cerrarPanelDetalle() {
+    document.getElementById('panel-detalle').classList.remove('activo');
+    setTimeout(() => {
+        document.getElementById('panel-overlay').classList.remove('activo');
+    }, 300); // Esperar a que termine la animación
+}
 </script>
 
 {% endblock contenido %}

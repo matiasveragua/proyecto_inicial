@@ -183,6 +183,11 @@ def mas_detalle(request):
 
 def panel_municipal(request):
     reportes_obtenidos = Reporte.objects.all()
+    ahora = timezone.now()
+
+    for reporte in reportes_obtenidos:
+        diferencia = ahora - reporte.fecha_creacion
+        reporte.dias_antiguedad = diferencia.days
 
     cantidad_recibidos = Reporte.objects.filter(estado_actual="recibido").count()
     
