@@ -180,3 +180,5 @@ def mis_reportes(request):
 @login_required
 def mas_detalle(request):
     return render(request, 'reportes/mas_detalle.html')
+def terminos(request):
+    return render(request, 'reportes/terminos.html')
