@@ -1,6 +1,10 @@
 {% extends 'reportes/base.html' %}
 
 {% block contenido %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
     .panel-org {--bg-panel: #0e1217; --card-bg: #171c23; --text-main: #f2f3f5; --text-muted: #9aa1ad; --border-color: rgba(255, 255, 255, 0.1); --fill-color: rgba(255, 255, 255, 0.08); --amarillo: #ffc20e; --rojo-alerta: #ff6a5e; --naranja: #f08a24; --azul: #3478f6; --verde: #2fa66a; background-color: var(--bg-panel); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; min-height: 100vh; display: flex; flex-direction: column; gap: 20px; }
 
@@ -29,9 +33,12 @@
     .panel-org .dsrch svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 
     /* Tabla */
-    .panel-org .dtable { background: var(--card-bg); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--border-color); }
+    .panel-org .dtable { background: var(--card-bg); border-radius: 14px; overflow: auto; display: flex; flex-direction: column; border: 1px solid var(--border-color); max-height: 65vh; }
+    .panel-org .dtable::-webkit-scrollbar { width: 8px; }
+    .panel-org .dtable::-webkit-scrollbar-thumb { background: #3a4452; border-radius: 4px; }
+    .panel-org .dtable::-webkit-scrollbar-track { background: transparent; }
     .panel-org .dtr { display: grid; gap: 10px; align-items: center; padding: 0 20px; min-height: 60px; border-top: 1px solid var(--border-color); font-size: 14px; grid-template-columns: 80px minmax(0,1.7fr) 70px 70px 120px 120px 100px; }
-    .panel-org .dtr.h { min-height: 44px; font-size: 13px; font-weight: 700; color: var(--text-muted); border-top: 0; background: var(--fill-color); }
+    .panel-org .dtr.h { min-height: 44px; font-size: 13px; font-weight: 700; color: var(--text-muted); border-top: 0; background: #232a35; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border-color); }
     .panel-org .dtr.sel { background: color-mix(in srgb, var(--amarillo) 8%, var(--card-bg)); }
     .panel-org .dtr b { font-weight: 700; color: var(--text-main); }
     .panel-org .dtr .s2 { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
@@ -53,6 +60,11 @@
     .panel-org .fchip-select option { background: var(--card-bg); color: var(--text-main); }
     .panel-org .dsrch input { background: transparent; border: none; color: var(--text-main); outline: none; width: 100%; font-size: 13.5px; }
     .panel-org .dsrch input::placeholder { color: var(--text-muted); }
+
+    /* Contenedor del mapa en el panel */
+    .mapa-contenedor { display: none; height: 65vh; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: var(--card-bg); color-scheme: light;}
+    .mapa-contenedor.activo { display: block; }
+
 </style>
 
 <div class="panel-org">
@@ -61,121 +73,118 @@
     <div class="dh">
         <div>
             <h2>Puntos críticos</h2>
-            <span class="sub">Agrupados por ubicación y categoría · actualizado hoy, 9:41</span>
+            <span class="sub">Agrupados por ubicación y categoría</span>
         </div>
         <div class="seg">
-            <span class="on">Tabla</span>
-            <span>Mapa</span>
+            <span class="on" id="btn-vista-tabla">Tabla</span>
+            <span id="btn-vista-mapa">Mapa</span>
         </div>
     </div>
 
     <!-- KPIs -->
     <div class="dkpis">
-        <!-- Estos números también los puedes volver dinámicos luego pasándolos desde la vista -->
-        <div class="dkpi"><b>7</b><span>Recibidos</span></div>
+        <div class="dkpi"><b>{{ total_recibidos }}</b><span>Recibidos</span></div>
         <div class="dkpi"><b>9</b><span>En revisión</span></div>
         <div class="dkpi"><b>24</b><span>Atendidos</span></div>
     </div>
 
-    <!-- Filtros y Buscador -->
-    <div class="dfil">
-        <select id="filtro-estado" class="fchip-select">
-            <option value="">Estado (Todos)</option>
-            <option value="recibido">Recibido</option>
-            <option value="en revisión">En revisión</option>
-            <option value="atendido">Atendido</option>
-            <option value="descartado">Descartado</option>
-        </select>
+    <!-- Envuelve los filtros y la tabla en este div para poder ocultarlos juntos -->
+    <div id="vista-tabla-contenido" style="display: flex; flex-direction: column; gap: 20px;">
         
-        <select id="filtro-categoria" class="fchip-select">
-            <option value="">Categoría (Todas)</option>
-        </select>
+        <!-- Filtros y Buscador -->
+        <div class="dfil">
+            <select id="filtro-estado" class="fchip-select">
+                <option value="">Estado (Todos)</option>
+                <option value="recibido">Recibido</option>
+                <option value="en revisión">En revisión</option>
+                <option value="atendido">Atendido</option>
+                <option value="descartado">Descartado</option>
+            </select>
+            
+            <select id="filtro-categoria" class="fchip-select">
+                <option value="">Categoría (Todas)</option>
+                <!-- Esto se llena solo con el JS -->
+            </select>
+            
+            <select id="filtro-gravedad" class="fchip-select">
+                <option value="">Gravedad (Todas)</option>
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+            </select>
+            
+            <select id="filtro-antiguedad" class="fchip-select">
+                <option value="">Antigüedad (Cualquiera)</option>
+                <option value="3">Últimos 3 días</option>
+                <option value="7">Últimos 7 días</option>
+                <option value="30">Últimos 30 días</option>
+            </select>
+            
+            <span class="sp2"></span>
+            
+            <span class="dsrch">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+                <input type="text" id="buscador-texto" placeholder="Buscar dirección o comuna">
+            </span>
+        </div>
+
+        <!-- Tabla de datos dinámica -->
+        <div class="dtable">
+            <div class="dtr h">
+                <span>Gravedad</span>
+                <span>Punto</span>
+                <span>Reportes</span>
+                <span>Confirm.</span>
+                <span>Días</span>
+                <span>Estado</span>
+                <span>Responsable</span>
+            </div>
+            
+            {% for reporte in reportes %}
+            <div class="dtr">
+                {% if reporte.categoria.gravedad_referencial == 'Alta' %}
+                    <span class="gv a">Alta</span>
+                {% elif reporte.categoria.gravedad_referencial == 'Media' %}
+                    <span class="gv m">Media</span>
+                {% else %}
+                    <span class="gv b">Baja</span>
+                {% endif %}
+                
+                <span>
+                    <b>{{ reporte.categoria.nombre }}</b>
+                    <span class="s2">{{ reporte.ubicacion.direccion_texto }}, {{ reporte.ubicacion.comuna }}</span>
+                </span>
+                
+                <span>1</span>
+                <span>{{ reporte.confirmacion_set.count }}</span>
+                <span>{{ reporte.dias_antiguedad }}</span>
+                
+                {% if reporte.estado_actual == 'en_revision' %}
+                    <span class="tag o"><i></i>En revisión</span>
+                {% elif reporte.estado_actual == 'atendido' %}
+                    <span class="tag g"><i></i>Atendido</span>
+                {% elif reporte.estado_actual == 'descartado' %}
+                    <span class="tag b" style="color: #98a2b3;"><i></i>Descartado</span>
+                {% else %}
+                    <span class="tag b"><i></i>Recibido</span>
+                {% endif %}
+                
+                <span>Sin asignar</span>
+            </div>
+            {% empty %}
+            <div class="dtr" style="justify-content: center; grid-column: 1 / -1; min-height: 100px;">
+                <span>No hay puntos críticos reportados.</span>
+            </div>
+            {% endfor %}
+        </div>
         
-        <select id="filtro-gravedad" class="fchip-select">
-            <option value="">Gravedad (Todas)</option>
-            <option value="alta">Alta</option>
-            <option value="media">Media</option>
-            <option value="baja">Baja</option>
-        </select>
-        
-        <select id="filtro-antiguedad" class="fchip-select">
-            <option value="">Antigüedad (Cualquiera)</option>
-            <option value="3">Últimos 3 días</option>
-            <option value="7">Últimos 7 días</option>
-            <option value="30">Últimos 30 días</option>
-        </select>
-        
-        <span class="sp2"></span>
-        
-        <span class="dsrch">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-            <input type="text" id="buscador-texto" placeholder="Buscar dirección o comuna">
-        </span>
     </div>
 
-    <!-- Tabla de datos dinámica -->
-    <div class="dtable">
-        <div class="dtr h">
-            <span>Gravedad</span>
-            <span>Punto</span>
-            <span>Reportes</span>
-            <span>Confirm.</span>
-            <span>Días</span>
-            <span>Estado</span>
-            <span>Responsable</span>
-        </div>
-        
-        <!-- Bucle For de Django para recorrer los reportes -->
-        {% for reporte in reportes %}
-        <div class="dtr">
-            
-            <!-- Etiqueta Dinámica de Gravedad -->
-            {% if reporte.categoria.gravedad_referencial == 'Alta' %}
-                <span class="gv a">Alta</span>
-            {% elif reporte.categoria.gravedad_referencial == 'Media' %}
-                <span class="gv m">Media</span>
-            {% else %}
-                <span class="gv b">Baja</span>
-            {% endif %}
-            
-            <!-- Datos del Punto -->
-            <span>
-                <b>{{ reporte.categoria.nombre }}</b>
-                <span class="s2">{{ reporte.ubicacion.direccion_texto }}, {{ reporte.ubicacion.comuna }}</span>
-            </span>
-            
-            <!-- Reportes: Como cada registro es 1 reporte único, por defecto es 1 -->
-            <span>1</span>
-            
-            <!-- Confirmaciones: Cuenta automáticamente los registros vinculados en el modelo Confirmacion -->
-            <span>{{ reporte.confirmacion_set.count }}</span>
-            
-            <!-- Días de antigüedad usando timesince de Django -->
-            <span>{{ reporte.fecha_creacion|timesince }}</span>
-            
-            <!-- Etiqueta Dinámica de Estado -->
-            {% if reporte.estado_actual == 'en_revision' %}
-                <span class="tag o"><i></i>En revisión</span>
-            {% elif reporte.estado_actual == 'atendido' %}
-                <span class="tag g"><i></i>Atendido</span>
-            {% elif reporte.estado_actual == 'descartado' %}
-                <span class="tag b" style="color: #98a2b3;"><i></i>Descartado</span>
-            {% else %}
-                <span class="tag b"><i></i>Recibido</span>
-            {% endif %}
-            
-            <!-- Responsable (No existe en el modelo actual) -->
-            <span>Sin asignar</span>
-            
-        </div>
-        {% empty %}
-        <!-- Fila por defecto en caso de no haber reportes -->
-        <div class="dtr" style="justify-content: center; grid-column: 1 / -1; min-height: 100px;">
-            <span>No hay puntos críticos reportados.</span>
-        </div>
-        {% endfor %}
-        
+    <!-- Contenedor del mapa -->
+    <div id="contenedor-mapa" class="mapa-contenedor">
+        <div id="mi-mapa-panel" class="darkreader-ignore" style="width: 100%; height: 100%; z-index: 1;"></div>
     </div>
+    
 </div>
 
 <script>
@@ -246,4 +255,122 @@ document.addEventListener('DOMContentLoaded', function() {
     buscador.addEventListener('input', aplicarFiltros); // 'input' actualiza letra por letra
 });
 </script>
+
+<!-- Convertir los datos de Django a JSON para que JavaScript los lea -->
+<script id="datos-mapa-panel" type="application/json">
+    [
+        {% for reporte in reportes %}
+        {
+            "lat": {{ reporte.ubicacion.latitud|stringformat:"f"|default:"0" }},
+            "lon": {{ reporte.ubicacion.longitud|stringformat:"f"|default:"0" }},
+            "categoria": "{{ reporte.categoria.nombre|escapejs }}",
+            "gravedad": "{{ reporte.categoria.gravedad_referencial|escapejs }}",
+            "estado": "{{ reporte.estado_actual|escapejs }}",
+            "direccion": "{{ reporte.ubicacion.direccion_texto|escapejs }}",
+            "comuna": "{{ reporte.ubicacion.comuna|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica del Botón Alternador (Tabla vs Mapa)
+    const btnTabla = document.getElementById('btn-vista-tabla');
+    const btnMapa = document.getElementById('btn-vista-mapa');
+    const vistaTabla = document.getElementById('vista-tabla-contenido');
+    const contenedorMapa = document.getElementById('contenedor-mapa');
+    
+    let mapaInicializado = false;
+    let mapaPanel;
+
+    btnTabla.addEventListener('click', function() {
+        btnTabla.classList.add('on');
+        btnMapa.classList.remove('on');
+        vistaTabla.style.display = 'flex';
+        contenedorMapa.classList.remove('activo');
+    });
+
+    btnMapa.addEventListener('click', function() {
+        btnMapa.classList.add('on');
+        btnTabla.classList.remove('on');
+        vistaTabla.style.display = 'none';
+        contenedorMapa.classList.add('activo');
+        
+        // Inicializar el mapa solo la primera vez que se abre
+        if (!mapaInicializado) {
+            inicializarMapa();
+            mapaInicializado = true;
+        } else {
+            // Leaflet necesita esto cuando un contenedor oculto se vuelve visible
+            setTimeout(() => mapaPanel.invalidateSize(), 100);
+        }
+    });
+
+    // Lógica del Mapa y los Pines
+    function inicializarMapa() {
+        mapaPanel = L.map('mi-mapa-panel', {
+            zoomControl: true 
+        }).setView([-33.4489, -70.6693], 12); // Centrado en Santiago
+
+        // Mapa de OpenStreetMap
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mapaPanel);
+
+        // Diccionarios de colores
+        const COLOR_ESTADO = {
+            recibido: '#ffc20e', // amarillo-vial
+            en_revision: '#f08a24', // naranja
+            atendido: '#2fa66a', // verde
+            descartado: '#98a2b3' // gris
+        };
+
+        // Extraer los datos del script JSON
+        const datosMapa = JSON.parse(document.getElementById('datos-mapa-panel').textContent);
+
+        datosMapa.forEach(function (p) {
+            let dimension = 30; // Gravedad Media
+            if (p.gravedad === 'Alta') dimension = 38;
+            if (p.gravedad === 'Baja') dimension = 24;
+
+            const colorFondo = COLOR_ESTADO[p.estado] || '#98a2b3';
+            
+            // Usamos un círculo simple y limpio para el panel municipal 
+            const htmlPin = `
+                <div style="
+                    width: ${dimension}px; 
+                    height: ${dimension}px; 
+                    background-color: ${colorFondo}; 
+                    border-radius: 50%; 
+                    border: 2px solid #171c23; 
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                "></div>
+            `;
+
+            const iconoPersonalizado = L.divIcon({
+                html: htmlPin,
+                className: '', 
+                iconSize: [dimension, dimension],
+                iconAnchor: [dimension / 2, dimension / 2], 
+                popupAnchor: [0, -dimension / 2] 
+            });
+
+            // Agregamos el pin al mapa con su popup
+            L.marker([p.lat, p.lon], { icon: iconoPersonalizado })
+                .bindPopup(`
+                    <div style="color: #333;">
+                        <b>${p.categoria}</b><br>
+                        ${p.direccion}, ${p.comuna}<br>
+                        <i>Estado: ${p.estado.replace('_', ' ')}</i>
+                    </div>
+                `)
+                .addTo(mapaPanel);
+        });
+        
+        setTimeout(() => mapaPanel.invalidateSize(), 100);
+    }
+});
+</script>
+
 {% endblock contenido %}
