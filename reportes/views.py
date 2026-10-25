@@ -190,12 +190,29 @@ def panel_municipal(request):
         reporte.dias_antiguedad = diferencia.days
 
     cantidad_recibidos = Reporte.objects.filter(estado_actual="recibido").count()
+    cantidad_revision = Reporte.objects.filter(estado_actual="en_revision").count()
+    cantidad_atendidos = Reporte.objects.filter(estado_actual="atendido").count()
     
     contexto = {
         'reportes': reportes_obtenidos,
-        'total_recibidos': cantidad_recibidos
+        'total_recibidos': cantidad_recibidos,
+        'total_revision': cantidad_revision, 
+        'total_atendidos': cantidad_atendidos
     }
     return render(request, 'reportes/panel_municipal.html', contexto)
+
+def actualizar_estado(request):
+    if request.method == 'POST':
+        reporte_id = request.POST.get('reporte_id')
+        nuevo_estado = request.POST.get('estado_rep')
+        comentario = request.POST.get('comentario', '')
+        
+        if reporte_id and nuevo_estado:
+            reporte = Reporte.objects.get(id=reporte_id)
+            reporte.estado_actual = nuevo_estado
+            reporte.save()
+            
+    return redirect('panel_municipal')
 
 def terminos(request):
     return render(request, 'reportes/terminos.html')

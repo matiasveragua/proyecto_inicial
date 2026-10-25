@@ -123,8 +123,8 @@
     <!-- KPIs -->
     <div class="dkpis">
         <div class="dkpi"><b>{{ total_recibidos }}</b><span>Recibidos</span></div>
-        <div class="dkpi"><b>9</b><span>En revisión</span></div>
-        <div class="dkpi"><b>24</b><span>Atendidos</span></div>
+        <div class="dkpi"><b>{{ total_revision }}</b><span>En revisión</span></div>
+        <div class="dkpi"><b>{{ total_atendidos }}</b><span>Atendidos</span></div>
     </div>
 
     <!-- Envuelve los filtros y la tabla en este div para poder ocultarlos juntos -->
@@ -181,6 +181,7 @@
             
             {% for reporte in reportes %}
             <div class="dtr" 
+                data-id="{{ reporte.id }}" 
                 data-categoria="{{ reporte.categoria.nombre }}"
                 data-direccion="{{ reporte.ubicacion.direccion_texto }}, {{ reporte.ubicacion.comuna }}"
                 data-gravedad="{{ reporte.categoria.gravedad_referencial|default:'Baja' }}"
@@ -277,26 +278,32 @@
             </div>
         </div>
 
-        <div class="s-title">Estado</div>
-        <div class="state-switch">
-            <input type="radio" name="estado_rep" id="st_recibido" value="recibido">
-            <label for="st_recibido">Recibido</label>
-            
-            <input type="radio" name="estado_rep" id="st_revision" value="en_revision">
-            <label for="st_revision">En revisión</label>
-            
-            <input type="radio" name="estado_rep" id="st_atendido" value="atendido">
-            <label for="st_atendido">Atendido</label>
-            
-            <input type="radio" name="estado_rep" id="st_descartado" value="descartado">
-            <label for="st_descartado">Descartado</label>
-        </div>
+        <!-- Formulario para guardar el estado -->
+        <form method="POST" action="{% url 'actualizar_estado' %}">
+            {% csrf_token %}
+            <!-- Campo oculto para saber qué reporte estamos editando -->
+            <input type="hidden" name="reporte_id" id="det-reporte-id" value="">
 
-        <div class="s-title">Comentario para los ciudadanos (obligatorio al descartar)</div>
-        <textarea placeholder="Ej: Cuadrilla reparó el bache el 9 de octubre."></textarea>
+            <div class="s-title">Estado</div>
+            <div class="state-switch">
+                <input type="radio" name="estado_rep" id="st_recibido" value="recibido">
+                <label for="st_recibido">Recibido</label>
+                
+                <input type="radio" name="estado_rep" id="st_revision" value="en_revision">
+                <label for="st_revision">En revisión</label>
+                
+                <input type="radio" name="estado_rep" id="st_atendido" value="atendido">
+                <label for="st_atendido">Atendido</label>
+                
+                <input type="radio" name="estado_rep" id="st_descartado" value="descartado">
+                <label for="st_descartado">Descartado</label>
+            </div>
 
-        <button class="btn-save" id="det-btn-guardar">Guardar y avisar</button>
-    </div>
+            <div class="s-title">Comentario para los ciudadanos (obligatorio al descartar)</div>
+            <textarea name="comentario" placeholder="Ej: Cuadrilla reparó el bache el 9 de octubre."></textarea>
+
+            <button type="submit" class="btn-save" id="det-btn-guardar">Guardar y avisar</button>
+        </form>
 </div>
 
 <script>
@@ -494,6 +501,8 @@ function abrirPanelDetalle(fila) {
     const dias = fila.getAttribute('data-dias');
     const estado = fila.getAttribute('data-estado');
     const fotoUrl = fila.getAttribute('data-foto');
+    const idReporte = fila.getAttribute('data-id');
+    document.getElementById('det-reporte-id').value = idReporte;
 
     // Inyectar textos básicos
     document.getElementById('det-categoria').innerText = cat;
