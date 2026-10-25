@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import RegistroForm, ReporteForm, UbicacionForm
@@ -182,3 +182,52 @@ def mas_detalle(request):
     return render(request, 'reportes/mas_detalle.html')
 def terminos(request):
     return render(request, 'reportes/terminos.html')
+@login_required
+def reporte_registrado(request, pk):
+    # Solo el autor puede ver la confirmación de su reporte
+    reporte = get_object_or_404(
+        Reporte.objects.select_related("categoria", "ubicacion"),
+        pk=pk,
+        creador=request.user,
+    )
+    return render(request, 'reportes/reporte_registrado.html', {"reporte": reporte})
+@login_required
+def nuevo_reporte(request):
+    datos_ubicacion = request.session.get(UBICACION_EN_CURSO)
+    if not datos_ubicacion:
+        messages.info(request, "Primero marca dónde está el desperfecto.")
+        return redirect("ubicacion")
+
+    if request.method == "POST":
+        form = ReporteForm(request.POST, request.FILES)
+        form_ubicacion = UbicacionForm(datos_ubicacion)
+
+        if not form_ubicacion.is_valid():
+            del request.session[UBICACION_EN_CURSO]
+            messages.info(request, "Vuelve a marcar dónde está el desperfecto.")
+            return redirect("ubicacion")
+
+        if form.is_valid():
+            ubicacion_guardada = form_ubicacion.save()
+            reporte = form.save(commit=False)
+            reporte.ubicacion = ubicacion_guardada
+            reporte.creador = request.user
+            reporte.save()
+            del request.session[UBICACION_EN_CURSO]
+            return redirect("reporte_registrado", pk=reporte.pk)
+    else:
+        form = ReporteForm()
+
+    contexto = {
+        "form": form,
+        "direccion": datos_ubicacion["direccion_texto"],
+        "comuna": datos_ubicacion["comuna"],
+    }
+    return render(request, 'reportes/nuevo_reporte.html', contexto)
+@login_required
+def confirmacion_enviada(request, pk):
+    reporte = get_object_or_404(
+        Reporte.objects.select_related("categoria", "ubicacion"),
+        pk=pk,
+    )
+    return render(request, 'reportes/confirmacion_enviada.html', {"reporte": reporte})

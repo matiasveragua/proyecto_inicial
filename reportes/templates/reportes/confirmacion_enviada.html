@@ -1,0 +1,64 @@
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+
+<style>
+    .pantalla { flex: 1; overflow-y: auto; width: 100%; display: flex; flex-direction: column; align-items: center; padding: 72px clamp(20px, 5vw, 80px) 28px; }
+    .contenido { width: 100%; max-width: 520px; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+
+    .check { width: 76px; height: 76px; border-radius: 50%; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+    .contenido h1 { margin: 0 0 8px; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+    .contenido .texto { margin: 0 0 24px; font-size: 15px; line-height: 1.45; color: var(--texto-secundario); max-width: 360px; }
+
+    /* Tarjeta con el resumen del reporte */
+    .resumen { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; background: var(--fondo-tarjeta); border-radius: 16px; padding: 12px; }
+    .miniatura { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: var(--texto-secundario); flex: none; }
+    .resumen b { display: block; font-size: 16px; }
+    .resumen .direccion { display: block; font-size: 13.5px; color: var(--texto-secundario); }
+    .resumen .estado { display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: 12.5px; color: var(--texto-secundario); }
+    .punto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f08a24; margin-right: 5px; }
+
+    .acciones { margin-top: auto; padding-top: 32px; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+    .btn { display: flex; align-items: center; justify-content: center; height: 52px; width: 100%; border-radius: 16px; font-size: 17px; font-weight: 700; text-decoration: none; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); box-shadow: 0 8px 20px -8px var(--amarillo-vial); }
+    .btn-texto { display: flex; align-items: center; justify-content: center; height: 44px; color: var(--amarillo-vial); font-size: 17px; font-weight: 600; text-decoration: none; }
+</style>
+
+<div class="pantalla">
+    <div class="contenido">
+
+        <div class="check">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </div>
+
+        <h1>Sumamos tu confirmación</h1>
+        <p class="texto">
+            Ahora {{ cantidad_confirmaciones|default:"5" }} personas confirman este reporte.
+            Te avisaremos cuando cambie de estado.
+        </p>
+
+        <!-- Para back end: pasar "reporte" y "cantidad_confirmaciones" desde la vista -->
+        <div class="resumen">
+            {% if reporte.foto %}
+                <img class="miniatura" src="{{ reporte.foto.url }}" alt="">
+            {% else %}
+                <div class="miniatura"></div>
+            {% endif %}
+            <div>
+                <b>{{ reporte.categoria|default:"Bache en calzada" }}</b>
+                <span class="direccion">{{ reporte.ubicacion.direccion_texto|default:"Av. V. Mackenna 3900" }}</span>
+                <span class="estado">
+                    <span><i class="punto"></i>{{ reporte.get_estado_actual_display|default:"En revisión" }}</span>
+                    <span>✓ {{ cantidad_confirmaciones|default:"5" }}</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="acciones">
+            <a class="btn" href="{% url 'inicio' %}">Volver al inicio</a>
+            <a class="btn-texto" href="{% url 'inicio' %}">Ver reportes cercanos</a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock contenido %}

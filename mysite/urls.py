@@ -32,6 +32,9 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/registro/', views.registro, name='registro'),
     path('terminos/', views.terminos, name='terminos'),
+    path('reporte-registrado/<int:pk>/', views.reporte_registrado, name='reporte_registrado'),
+    path('nuevo-reporte/', views.nuevo_reporte, name='nuevo_reporte'),
+    path('confirmacion/<int:pk>/', views.confirmacion_enviada, name='confirmacion_enviada'),
 ]
 
 # En desarrollo, servir las fotos subidas desde /media/
