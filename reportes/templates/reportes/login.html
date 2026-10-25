@@ -176,16 +176,17 @@
 
 function verificarClave(evento) {
     evento.preventDefault(); // Evita que el botón haga su acción por defecto
+    evento.stopImmediatePropagation();
     
     let clave = prompt("Ingrese la contraseña de acceso municipal:");
     
     if (clave === "Municipalidad") {
-        // Redirige al panel si la contraseña es exacta
         window.location.href = "{% url 'panel_municipal' %}"; 
     } else if (clave !== null) {
-        // Muestra un error si escribe algo equivocado (omite si presiona Cancelar)
         alert("Contraseña incorrecta. Acceso denegado.");
     }
+    
+    return false;
 }
 </script>
 
