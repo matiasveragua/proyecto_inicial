@@ -191,3 +191,6 @@ def panel_municipal(request):
         'total_recibidos': cantidad_recibidos
     }
     return render(request, 'reportes/panel_municipal.html', contexto)
+
+def terminos(request):
+    return render(request, 'reportes/terminos.html')
