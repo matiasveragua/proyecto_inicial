@@ -183,8 +183,11 @@ def mas_detalle(request):
 
 def panel_municipal(request):
     reportes_obtenidos = Reporte.objects.all()
+
+    cantidad_recibidos = Reporte.objects.filter(estado_actual="recibido").count()
     
     contexto = {
-        'reportes': reportes_obtenidos
+        'reportes': reportes_obtenidos,
+        'total_recibidos': cantidad_recibidos
     }
     return render(request, 'reportes/panel_municipal.html', contexto)
