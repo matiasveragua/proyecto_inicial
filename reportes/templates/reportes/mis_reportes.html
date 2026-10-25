@@ -31,6 +31,18 @@
         display: flex;
         gap: 14px;
         align-items: flex-start;
+        text-decoration: none;
+        color: inherit;
+    }
+    .confirmado {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 999px;
+        margin: 0 0 8px 0;
+        background-color: rgba(128, 128, 128, 0.14);
+        color: var(--texto-secundario);
     }
     .miniatura {
         width: 56px;
@@ -130,7 +142,7 @@
     </p>
 
     {% for reporte in reportes %}
-        <div class="tarjeta">
+        <a class="tarjeta" href="{% url 'detalle' reporte.id %}">
             {% if reporte.foto %}
                 <img class="miniatura" src="{{ reporte.foto.url }}" alt="Foto del reporte">
             {% else %}
@@ -140,6 +152,11 @@
             <div class="cuerpo">
                 <p class="titulo-tarjeta">{{ reporte.categoria }}</p>
                 <p class="lugar">{{ reporte.ubicacion.direccion_texto }}, {{ reporte.ubicacion.comuna }}</p>
+
+                {% if not reporte.lo_reporte_yo %}
+                    {# Esta en la lista porque lo confirmo, no porque lo haya creado. #}
+                    <p class="confirmado">Lo confirmaste</p>
+                {% endif %}
                 <p class="descripcion">{{ reporte.descripcion }}</p>
 
                 <div class="pie">
@@ -159,9 +176,9 @@
                     <span>{{ reporte.fecha_creacion|date:"d/m/Y H:i" }}</span>
                 </div>
             </div>
-        </div>
+        </a>
     {% empty %}
-        <p class="vacio">Todavía no has hecho ningún reporte.</p>
+        <p class="vacio">Todavía no reportaste ni confirmaste nada.</p>
     {% endfor %}
 
     <a href="{% url 'ubicacion' %}" class="boton-principal">Reportar desperfecto</a>
