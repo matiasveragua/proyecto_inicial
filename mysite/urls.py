@@ -33,7 +33,11 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/registro/', views.registro, name='registro'),
     path('terminos/', views.terminos, name='terminos'),
+    path('actualizar-estado/', views.actualizar_estado, name='actualizar_estado'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # En desarrollo, servir las fotos subidas desde /media/
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
