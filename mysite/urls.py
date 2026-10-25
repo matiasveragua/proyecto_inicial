@@ -5,8 +5,10 @@ Rutas del proyecto. El flujo para reportar es:
 
     /              inicio, el mapa con los dos botones
     /ubicacion/    paso 1: donde esta el desperfecto
-    /reportar/     paso 2: que es y una foto
-    /mis-reportes/ la lista de lo que ha reportado el usuario
+    /cercanos/     paso 2: lo que ya hay reportado ahi, para confirmar
+    /reportar/     paso 3: que es y una foto
+    /mis-reportes/ lo que el usuario reporto y lo que confirmo
+    /reporte/5/    el seguimiento de un reporte: estado e historial
 
 Las de cuenta (/accounts/login/ y /accounts/logout/) las trae Django hechas.
 """
@@ -21,8 +23,12 @@ urlpatterns = [
 
     path('', views.inicio, name='inicio'),
     path('ubicacion/', views.ubicacion, name='ubicacion'),
+    path('cercanos/', views.cercanos, name='cercanos'),
     path('reportar/', views.reportar, name='reportar'),
     path('mis-reportes/', views.mis_reportes, name='mis_reportes'),
+    # <int:...> deja pasar solo numeros, asi /reporte/abc/ es un 404 y la
+    # vista recibe un entero y no un texto.
+    path('reporte/<int:reporte_id>/', views.detalle, name='detalle'),
 
     path('accounts/registro/', views.registro, name='registro'),
     # Trae gratis /accounts/login/ y /accounts/logout/ de Django.
