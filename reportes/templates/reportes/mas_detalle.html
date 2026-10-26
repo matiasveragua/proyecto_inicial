@@ -43,6 +43,10 @@
     .acciones { margin-top: auto; padding-top: 28px; display: flex; flex-direction: column; gap: 8px; }
     .btn { appearance: none; border: 0; height: 52px; border-radius: 16px; width: 100%; font-size: 17px; font-weight: 700; cursor: pointer; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); box-shadow: 0 8px 20px -8px var(--amarillo-vial); }
     .btn-texto { display: flex; align-items: center; justify-content: center; height: 44px; color: var(--amarillo-vial); font-size: 17px; font-weight: 600; text-decoration: none; }
+        /* Computador y tablet: espacios de foto más pequeños */
+    @media (min-width: 768px) {
+        .fotos { grid-template-columns: repeat(3, 120px); }
+    }
 </style>
 
 <div class="pantalla">

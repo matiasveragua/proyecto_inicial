@@ -1,0 +1,68 @@
+{% extends 'reportes/base.html' %}
+
+{% block contenido %}
+
+<style>
+    /* Ocupa todo el ancho de la pantalla; el espacio lateral crece con el tamaño */
+    .pantalla { flex: 1; overflow-y: auto; width: 100%; display: flex; flex-direction: column; padding: 52px clamp(20px, 5vw, 80px) 28px; }
+
+    .volver { display: inline-flex; align-items: center; gap: 2px; align-self: flex-start; color: var(--amarillo-vial); font-size: 17px; font-weight: 600; text-decoration: none; margin-bottom: 18px; }
+    .pantalla h1 { margin: 0 0 22px; font-size: clamp(34px, 4vw, 52px); font-weight: 800; letter-spacing: -.03em; }
+
+    .termino { margin-bottom: 18px; }
+    .termino h2 { margin: 0 0 4px; font-size: 18px; font-weight: 700; }
+    .termino p { margin: 0; font-size: 16px; line-height: 1.4; color: var(--texto-secundario); }
+
+    .acciones { margin-top: auto; padding-top: 24px; width: 100%; }
+    .btn { display: flex; align-items: center; justify-content: center; height: 52px; width: 100%; border-radius: 16px; font-size: 17px; font-weight: 700; text-decoration: none; background: var(--amarillo-vial); color: var(--texto-sobre-amarillo); box-shadow: 0 8px 20px -8px var(--amarillo-vial); }
+
+    /* Tablet y computador: términos en dos columnas, cada uno en una tarjeta */
+    @media (min-width: 768px) {
+        .terminos-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .terminos-lista .termino { background: var(--fondo-tarjeta); border-radius: 16px; padding: 24px; margin-bottom: 0; }
+        .termino h2 { font-size: 20px; }
+        .termino p { font-size: 17px; }
+        .acciones { max-width: 360px; margin-left: auto; margin-right: auto; }
+    }
+</style>
+
+<div class="pantalla">
+
+    <a class="volver" href="{% url 'registro' %}">
+        <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg>
+        Crear cuenta
+    </a>
+
+    <h1>Términos</h1>
+
+    <div class="terminos-lista">
+
+        <div class="termino">
+            <h2>1. Tu cuenta</h2>
+            <p>Cada reporte queda asociado a su autor. Cuida tu contraseña.</p>
+        </div>
+
+        <div class="termino">
+            <h2>2. Fotos y datos personales</h2>
+            <p>Evita incluir rostros ni patentes en tus fotografías. Eres responsable de lo que envías.</p>
+        </div>
+
+        <div class="termino">
+            <h2>3. Avisos</h2>
+            <p>Recibirás actualizaciones exclusivas de tus reportes por correo, o por SMS si validas tu número.</p>
+        </div>
+
+        <div class="termino">
+            <h2>4. Uso indebido</h2>
+            <p>Cualquier reporte falso o inapropiado será eliminado de la plataforma.</p>
+        </div>
+
+    </div>
+
+    <div class="acciones">
+        <a class="btn" href="{% url 'registro' %}">Entendido</a>
+    </div>
+
+</div>
+
+{% endblock contenido %}
