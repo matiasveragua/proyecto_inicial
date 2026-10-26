@@ -1,0 +1,233 @@
+{% extends 'reportes/base.html' %}
+
+{% comment %}
+    El seguimiento de un reporte. La pregunta que viene a contestar es "¿en que
+    quedo lo que reporte?", por eso el estado va arriba y grande, y abajo la
+    linea de tiempo con lo que le ha pasado.
+{% endcomment %}
+
+{% block contenido %}
+<style>
+    .hoja {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+    .encabezado {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .encabezado a {
+        color: var(--texto-secundario);
+        text-decoration: none;
+        font-size: 22px;
+        line-height: 1;
+    }
+    .encabezado h1 {
+        font-size: 20px;
+        margin: 0;
+    }
+    .tarjeta {
+        background-color: var(--fondo-tarjeta);
+        border-radius: 18px;
+        padding: 18px;
+        margin-bottom: 14px;
+    }
+    .foto {
+        width: 100%;
+        max-height: 240px;
+        object-fit: cover;
+        border-radius: 14px;
+        margin-bottom: 14px;
+        display: block;
+    }
+    .categoria {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+    }
+    .lugar {
+        color: var(--texto-secundario);
+        font-size: 14px;
+        margin: 0 0 14px 0;
+    }
+    .estado-grande {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background-color: rgba(128, 128, 128, 0.12);
+    }
+    .punto {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .descripcion {
+        font-size: 15px;
+        line-height: 1.5;
+        margin: 16px 0 0 0;
+    }
+    .pie {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        margin-top: 16px;
+        font-size: 12.5px;
+        color: var(--texto-secundario);
+    }
+    .marca {
+        display: inline-block;
+        font-size: 12.5px;
+        font-weight: 600;
+        padding: 5px 11px;
+        border-radius: 999px;
+        margin-bottom: 12px;
+        background-color: rgba(128, 128, 128, 0.12);
+        color: var(--texto-secundario);
+    }
+    .titulo-seccion {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0 0 14px 0;
+    }
+    /* Linea de tiempo: la raya vertical es el borde izquierdo de cada paso,
+       y el punto va encima de la raya con un margen negativo. */
+    .paso {
+        position: relative;
+        padding: 0 0 18px 20px;
+        border-left: 2px solid rgba(128, 128, 128, 0.25);
+    }
+    .paso:last-child {
+        padding-bottom: 0;
+        border-left-color: transparent;
+    }
+    .marcador {
+        position: absolute;
+        left: -6px;
+        top: 3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--texto-secundario);
+    }
+    .paso-titulo {
+        font-size: 14.5px;
+        font-weight: 600;
+        margin: 0;
+    }
+    .paso-fecha {
+        font-size: 12.5px;
+        color: var(--texto-secundario);
+        margin: 2px 0 0 0;
+    }
+    .paso-comentario {
+        font-size: 14px;
+        margin: 6px 0 0 0;
+    }
+    .esperando {
+        color: var(--texto-secundario);
+        font-size: 14px;
+        line-height: 1.45;
+        margin: 0;
+    }
+    .volver {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 52px;
+        border-radius: 16px;
+        margin-top: 4px;
+        background-color: transparent;
+        border: 1.5px solid var(--texto-secundario);
+        color: var(--texto-principal);
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+</style>
+
+<div class="hoja">
+    <div class="encabezado">
+        <a href="{% url 'mis_reportes' %}" title="Volver">&larr;</a>
+        <h1>Reporte #{{ reporte.id }}</h1>
+    </div>
+
+    <div class="tarjeta">
+        {% if lo_reporte_yo %}
+            <span class="marca">Lo reportaste tú</span>
+        {% elif lo_confirme_yo %}
+            <span class="marca">Lo confirmaste</span>
+        {% endif %}
+
+        {% if reporte.foto %}
+            <img class="foto" src="{{ reporte.foto.url }}" alt="Foto del desperfecto">
+        {% endif %}
+
+        <p class="categoria">{{ reporte.categoria }}</p>
+        <p class="lugar">{{ reporte.ubicacion.direccion_texto }}, {{ reporte.ubicacion.comuna }}</p>
+
+        <span class="estado-grande">
+            {# Los mismos colores de la leyenda de la portada #}
+            {% if reporte.estado_actual == 'recibido' %}
+                <i class="punto" style="background-color: var(--amarillo-vial);"></i>
+            {% elif reporte.estado_actual == 'en_revision' %}
+                <i class="punto" style="background-color: #f08a24;"></i>
+            {% elif reporte.estado_actual == 'atendido' %}
+                <i class="punto" style="background-color: #2fa66a;"></i>
+            {% else %}
+                <i class="punto" style="background-color: #98a2b3;"></i>
+            {% endif %}
+            {{ reporte.get_estado_actual_display }}
+        </span>
+
+        <p class="descripcion">{{ reporte.descripcion }}</p>
+
+        <div class="pie">
+            {% if confirmaciones == 1 %}
+                <span>1 persona lo confirmó</span>
+            {% elif confirmaciones > 1 %}
+                <span>{{ confirmaciones }} personas lo confirmaron</span>
+            {% else %}
+                <span>Sin confirmaciones todavía</span>
+            {% endif %}
+            <span>Reportado el {{ reporte.fecha_creacion|date:"d/m/Y" }} a las {{ reporte.fecha_creacion|date:"H:i" }}</span>
+        </div>
+    </div>
+
+    <div class="tarjeta">
+        <p class="titulo-seccion">Qué ha pasado</p>
+
+        <div class="paso">
+            <i class="marcador" style="background-color: var(--amarillo-vial);"></i>
+            <p class="paso-titulo">Reporte recibido</p>
+            <p class="paso-fecha">{{ reporte.fecha_creacion|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        {% for cambio in historial %}
+            <div class="paso">
+                <i class="marcador"></i>
+                <p class="paso-titulo">{{ cambio.estado }}</p>
+                <p class="paso-fecha">{{ cambio.fecha|date:"d/m/Y H:i" }}</p>
+                {% if cambio.comentario %}
+                    <p class="paso-comentario">{{ cambio.comentario }}</p>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p class="esperando">
+                Nadie ha movido el estado todavía. Cuando la municipalidad
+                revise el reporte, el cambio va a aparecer acá.
+            </p>
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'mis_reportes' %}" class="volver">Volver a mis reportes</a>
+</div>
+{% endblock contenido %}
