@@ -785,7 +785,7 @@
         const latPrueba = -33.453840; // Reemplaza con la latitud que quieras probar
         const lonPrueba = -70.677135; // Reemplaza con la longitud que quieras probar
         const searchRadius = 500;
-        */
+        
         blueDot.setLatLng([latPrueba, lonPrueba]);
         let circleArea = L.circle([latPrueba, lonPrueba], {
             color: '#3478f6',
@@ -796,6 +796,7 @@
         }).addTo(mapa);
         mapa.setView([latPrueba, lonPrueba], 17);
         loadNearbyReports(latPrueba, lonPrueba, searchRadius);
+        */
 
         setTimeout(function() { mapa.invalidateSize(); }, 100);
 
