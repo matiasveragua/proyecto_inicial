@@ -33,6 +33,7 @@
         overflow: hidden;
         contain: layout paint size;
         background-color: var(--fondo-pantalla);
+    }
     .leaflet-container {
         background-color: var(--fondo-pantalla) !important;
     }
@@ -44,7 +45,7 @@
         contain: strict;   /* nada de Leaflet puede afectar el layout de afuera */
 }
 
-    }
+    
     .inferior-panel {
         background-color: var(--fondo-pantalla);
         border-radius: 26px 26px 0 0 ;
@@ -382,7 +383,7 @@
         <div class="catch-line"></div>
         <div class="tx">
             <b>Cerca de ti</b>
-            <span>{{ num_reports|default:"0" }} reportes en tu zona</span>
+            <span id="contador-contraido">{{ num_reports|default:"0" }} reportes en tu zona</span>
         </div>
     </div>
 
@@ -393,11 +394,11 @@
         <div class="header-expandido-centrado">
             <div style="display: flex; flex-direction: column; gap: 2px;">
                 <h2 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.025em;">Cerca de ti</h2>
-                <span style="color: var(--texto-secundario); font-size: 14px;">{{ num_reports|default:"0" }} abiertos en tu zona</span>
-            </div>
+                <span id="contador-expandido" style="color: var(--texto-secundario); font-size: 14px;">{{ num_reports|default:"0" }} reportes en tu zona</span>
             {% if user.is_authenticated %}
                 <a href="{% url 'mis_reportes' %}" class="link-mis-reportes">Mis reportes</a>
             {% endif %}
+            </div>
         </div>
         
         <div class="chips">
@@ -406,8 +407,8 @@
             <span class="fchip">En revisión</span>
         </div>
         
-        <div class="report-scroll">
-            {% if report_list %}
+        <div class="report-scroll" id="lista-reportes">
+            {% if report_list %}           
                 <div class="group">
                     {% for report in report_list %}
                         <div class="rep">
@@ -512,8 +513,7 @@
             layers: [capaEstandar] 
         }).setView([-33.4489, -70.6693], 16);
 
-        // Pin de prueba
-                // Dibujar el punto azul central de "Mi Ubicación"
+         // Dibujar el punto azul central de "Mi Ubicación"
         let blueDot = L.circleMarker([-33.4489, -70.6693], {
             color: '#ffffff',
             weight: 3,
@@ -521,24 +521,6 @@
             fillOpacity: 1,
             radius: 7
         }).addTo(mapa);
-        if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const lat = position.coords.latitude;
-                            const lon = position.coords.longitude;
-                            mapa.setView([lat, lon], 16);
-                            blueDot.setLatLng([lat, lon]); 
-                        },
-                        function(error) {
-                            console.warn("No se pudo obtener la ubicación: ", error.message);
-                        },
-                        {
-                            enableHighAccuracy: true, 
-                            timeout: 10000,
-                            maximumAge: 0
-                        }
-                    );
-                }
 
         // --- PINES DINÁMICOS ---
         const COLOR_ESTADO = {
@@ -698,37 +680,119 @@
             'default': `<svg viewBox="0 0 24 24" style="width: 62%; height: 62%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;"><path d="M12 2l9.5 17h-19z" stroke-linejoin="round"/><path d="M12 9v4"/><circle cx="12" cy="16.5" r="1.2" fill="currentColor" stroke="none"/></svg>`
         };
 
+        function loadNearbyReports(centerLat, centerLon, radiusMeters){
+            const reportsData = document.getElementById('datos-reportes');
+            if (!reportsData) return;
+            const pointsArray = JSON.parse(reportsData.textContent);
+            const centerLocation = L.latLng(centerLat, centerLon);
+            let nearbyCount = 0;
+            let reportsHtml = '';
 
-        const datosReportes = document.getElementById('datos-reportes');
-        if (datosReportes) {
-            const puntosArray = JSON.parse(datosReportes.textContent);
+            pointsArray.forEach(function (p) {
+                const reportPos = L.latLng(p.lat, p.lon);
+                const distance = centerLocation.distanceTo(reportPos);
+                if (distance <= radiusMeters) {
+                    nearbyCount++;
+                    let dimension = 42
+                    if (p.gravedad == 'Alta') dimension = 52;
+                    if (p.gravedad == 'Baja') dimension = 32;
 
-        puntosArray.forEach(function (p) {
-                let dimension = 42; // Tamaño 'Media' por defecto
-                if (p.gravedad === 'Alta') dimension = 52;
-                if (p.gravedad === 'Baja') dimension = 32;
-
-                const svgSeleccionado = ICONOS_SVG[p.categoria] || ICONOS_SVG['default'];
-                const colorFondo = COLOR_ESTADO[p.estado] || '#98a2b3';
-                    const htmlPin = `
-                        <div class="marker-pin">
-                            ${svgSeleccionado}
-                        </div>
+                    const selectedSvg = ICONOS_SVG[p.categoria] || ICONOS_SVG['default'];
+                    const pintHtml = `<div class="marker-pin">${selectedSvg}</div>`;
+                    const customIcon = L.divIcon({
+                        html: pintHtml,
+                        className: '',
+                        iconSize: [dimension, dimension],
+                        iconAnchor: [dimension / 2, dimension / 2],
+                        popupAnchor: [0, -dimension / 2]
+                    });
+                    const popupText = '<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + (p.etiqueta || '') + '<br><span style="color:#f08a24; font-weight:bold;">A ' + Math.round(distance) + ' metros de ti</span>';
+                    L.marker([p.lat, p.lon], { icon: customIcon}).bindPopup(popupText).addTo(mapa);
+                    let statusText = p.estado || "En revisión";
+                    let tagColor = "o";
+                    if (statusText === "Recibido") tagColor = "b";
+                    if (statusText === "Atendido") tagColor = "g";
+                    reportsHtml += `
+                        <div class="rep">
+                            <span class="thumb"></span>
+                            <span class="t">
+                                <b>${p.categoria || "Desperfecto"}</b>
+                                <span class="a">${p.comuna || ""} - A ${Math.round(distance)}m</span>
+                                <span class="tag ${tagColor}"><i></i>${statusText}</span>
+                            </span>
+                        </div> 
                     `;
-
-                const iconoPersonalizado = L.divIcon({
-                    html: htmlPin,
-                    className: '', 
-                    iconSize: [dimension, dimension],
-                    iconAnchor: [dimension / 2, dimension / 2], 
-                    popupAnchor: [0, -dimension / 2] 
-                });
-
-                L.marker([p.lat, p.lon], { icon: iconoPersonalizado })
-                    .bindPopup('<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + (p.etiqueta || ''))
-                    .addTo(mapa);
+                }
             });
+        document.getElementById('contador-contraido').textContent = `${nearbyCount} reportes en tu zona`;
+        document.getElementById('contador-expandido').textContent = `${nearbyCount} reportes en tu zona`;
+
+        const listContainer = document.getElementById('lista-reportes');
+        if (nearbyCount > 0) {
+            listContainer.innerHTML = `<div class="group">${reportsHtml}</div>`;
+        } else {
+            listContainer.innerHTML = `
+                <div class="empty">
+                    <div class="ic">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/>
+                        </svg>
+                    </div>
+                    <h3>Sin reportes cercanos</h3>
+                    <p>Parece que todo está en orden por aquí. ¡Navega por el mapa para explorar!</p>
+                </div>
+            `;
         }
+            
+        }
+        
+        // Solicitar Ubi
+        /*if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    blueDot.setLatLng([lat, lon]);
+                    const searchRadius = 500;
+                    let circleArea = L.circle([lat, lon],{
+                        color: '#3478f6',
+                        fillColor: '#3478f6',
+                        fillOpacity: 0.08,
+                        weight: 1,
+                        radius: searchRadius
+                    }).addTo(mapa);
+                    mapa.setView([lat, lon], 15.4);
+                    loadNearbyReports(lat, lon, searchRadius);
+                },
+                function(error) {
+                    console.warn("No se pudo obtener la ubicación: ", error.message);
+                    loadNearbyReports(-33.4489, -70.6693, 50000);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000, 
+                    maximumAge: 0
+                }
+            );
+        } else {
+            loadNearbyReports(-33.4489, -70.6693, 50000);
+        }
+        */
+        // Ubi para pruebas
+        const latPrueba = -33.453840; // Reemplaza con la latitud que quieras probar
+        const lonPrueba = -70.677135; // Reemplaza con la longitud que quieras probar
+        const searchRadius = 500;
+
+        blueDot.setLatLng([latPrueba, lonPrueba]);
+        let circleArea = L.circle([latPrueba, lonPrueba], {
+            color: '#3478f6',
+            fillColor: '#3478f6',
+            fillOpacity: 0.08,
+            weight: 1,
+            radius: searchRadius
+        }).addTo(mapa);
+        mapa.setView([latPrueba, lonPrueba], 17);
+        loadNearbyReports(latPrueba, lonPrueba, searchRadius);
 
         setTimeout(function() { mapa.invalidateSize(); }, 100);
 
