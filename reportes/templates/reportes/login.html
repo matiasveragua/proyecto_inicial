@@ -56,7 +56,7 @@
 <div class="hero">
 
     <!-- Botón M para la municipalidad -->
-    <button class="btn-extra-m" id="btnExtraM" type="button">M</button>
+    <button class="btn-extra-m" id="btnExtraM" type="button" onclick="verificarClave(event)">M</button>
 
     <div class="inner">
 
@@ -173,6 +173,21 @@
     document.getElementById('btnExtraM').addEventListener('click', function() {
         window.location.href = "{% url 'panel_municipal' %}";
     });
+
+function verificarClave(evento) {
+    evento.preventDefault(); // Evita que el botón haga su acción por defecto
+    evento.stopImmediatePropagation();
+    
+    let clave = prompt("Ingrese la contraseña de acceso municipal:");
+    
+    if (clave === "Municipalidad") {
+        window.location.href = "{% url 'panel_municipal' %}"; 
+    } else if (clave !== null) {
+        alert("Contraseña incorrecta. Acceso denegado.");
+    }
+    
+    return false;
+}
 </script>
 
 {% endblock contenido %}
