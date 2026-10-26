@@ -1,0 +1,234 @@
+{% extends 'reportes/base.html' %}
+
+{% comment %}
+    Paso 2 de 3. Lo que ya esta reportado alrededor del punto que marco la
+    persona. El objetivo de la pantalla es que confirme en vez de duplicar,
+    por eso el boton amarillo (el que se ve primero) es "Es este, lo confirmo"
+    y el de crear uno nuevo queda abajo, con menos peso.
+{% endcomment %}
+
+{% block contenido %}
+<style>
+
+    /* La barra de arriba es la misma de ubicacion y reportar, para que los
+       tres pasos se vean de la misma aplicacion. */
+
+    .top-bar { flex: none; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .top-bar .line { display: flex; align-items: center; justify-content: space-between; height: 30px; }
+
+    .back { display: inline-flex; align-items: center; gap: 2px; font-size: 16px; color: #8f6200; font-weight: 600; margin-left: -4px; text-decoration: none; }
+    .back svg { width: 12px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    .stepno { font-size: 12.5px; color: var(--texto-secundario); font-weight: 600; }
+    .prog { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .prog i { height: 4px; border-radius: 2px; background: rgba(27, 36, 48, .07); }
+    .prog i.on { background: var(--amarillo-vial); }
+
+    .large { margin: 8px 0 0 0; font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.12; color: var(--texto-principal); }
+
+    .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 34px; }
+
+    .bajada {
+        color: var(--texto-secundario);
+        font-size: 14px;
+        line-height: 1.45;
+        margin: 0 0 16px 0;
+    }
+    .tarjeta {
+        background-color: var(--fondo-tarjeta);
+        border-radius: 18px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    .fila {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+    }
+    .miniatura {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    .sin-foto {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        background-color: rgba(128, 128, 128, 0.15);
+    }
+    .cuerpo {
+        flex: 1;
+        min-width: 0;
+    }
+    .titulo-tarjeta {
+        font-weight: 600;
+        font-size: 15px;
+        margin: 0 0 3px 0;
+    }
+    .lugar {
+        color: var(--texto-secundario);
+        font-size: 13px;
+        margin: 0 0 8px 0;
+    }
+    .descripcion {
+        font-size: 14px;
+        margin: 0 0 10px 0;
+    }
+    .datos {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 12px;
+        font-size: 12px;
+        color: var(--texto-secundario);
+    }
+    .estado {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .punto {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .distancia {
+        font-weight: 600;
+        color: var(--texto-principal);
+    }
+    .boton-confirmar {
+        background-color: var(--amarillo-vial);
+        color: var(--texto-sobre-amarillo);
+        border: none;
+        width: 100%;
+        height: 46px;
+        border-radius: 14px;
+        font-size: 15px;
+        font-weight: bold;
+        font-family: inherit;
+        cursor: pointer;
+        margin-top: 14px;
+    }
+    .mio {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--texto-secundario);
+    }
+    .mio a {
+        color: var(--color-boton-secundario);
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .otro {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 52px;
+        border-radius: 16px;
+        margin-top: 8px;
+        background-color: transparent;
+        border: 1.5px solid var(--texto-secundario);
+        color: var(--texto-principal);
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+</style>
+
+<!-- barra superior y el progreso -->
+
+<div class="top-bar">
+    <div class="line">
+
+        <a href="{% url 'ubicacion' %}" class="back">
+            <svg viewBox="0 0 12 20"><path d="M10 2 2 10l8 8"/></svg>Volver
+        </a>
+
+        <span class="stepno">Paso 2 de 3</span>
+
+    </div>
+
+    <div class="prog"><i class="on"></i><i class="on"></i><i></i></div>
+    <h1 class="large">¿Ya está reportado?</h1>
+
+</div>
+
+<div class="pbody">
+
+    <p class="bajada">
+        Esto es lo que hay reportado a menos de {{ radio }} metros de
+        <b>{{ direccion }}, {{ comuna }}</b>. Si alguno es el desperfecto que
+        venías a reportar, confírmalo: ayuda más que crear uno nuevo.
+    </p>
+
+    {% for item in cercanos %}
+        <div class="tarjeta">
+            <div class="fila">
+                {% if item.reporte.foto %}
+                    <img class="miniatura" src="{{ item.reporte.foto.url }}" alt="Foto del reporte">
+                {% else %}
+                    <div class="sin-foto"></div>
+                {% endif %}
+
+                <div class="cuerpo">
+                    <p class="titulo-tarjeta">{{ item.reporte.categoria }}</p>
+                    <p class="lugar">{{ item.reporte.ubicacion.direccion_texto }}</p>
+                    <p class="descripcion">{{ item.reporte.descripcion|truncatechars:110 }}</p>
+
+                    <div class="datos">
+                        <span class="distancia">a {{ item.metros }} m</span>
+
+                        <span class="estado">
+                            {# Los mismos colores de la leyenda de la portada #}
+                            {% if item.reporte.estado_actual == 'recibido' %}
+                                <i class="punto" style="background-color: var(--amarillo-vial);"></i>
+                            {% else %}
+                                <i class="punto" style="background-color: #f08a24;"></i>
+                            {% endif %}
+                            {{ item.reporte.get_estado_actual_display }}
+                        </span>
+
+                        {% if item.confirmaciones == 1 %}
+                            <span>1 confirmación</span>
+                        {% elif item.confirmaciones > 1 %}
+                            <span>{{ item.confirmaciones }} confirmaciones</span>
+                        {% endif %}
+
+                        <span>{{ item.reporte.fecha_creacion|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if item.lo_reporte_yo %}
+                {% comment %}
+                    Confirmar lo propio seria contarse dos veces, asi que en
+                    vez del boton va el enlace al seguimiento.
+                {% endcomment %}
+                <div class="mio">
+                    <span>Este lo reportaste tú.</span>
+                    <a href="{% url 'detalle' item.reporte.id %}">Ver seguimiento &rarr;</a>
+                </div>
+            {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="reporte" value="{{ item.reporte.id }}">
+                    <button type="submit" class="boton-confirmar">Es este, lo confirmo</button>
+                </form>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <a href="{% url 'reportar' %}" class="otro">Ninguno, es otro desperfecto</a>
+
+</div>
+{% endblock contenido %}
