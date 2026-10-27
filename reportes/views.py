@@ -4,16 +4,24 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.shortcuts import redirect, render
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from .cercania import RADIO_METROS, reportes_cercanos
 from .forms import RegistroForm, ReporteForm, UbicacionForm
-from .models import Reporte
+from .models import Confirmacion, Reporte
 
 # Clave con la que guardamos la ubicacion del paso 1 mientras el usuario
 # completa el paso 2. Va en la sesion y no en la base, porque un reporte a
 # medio llenar todavia no es un reporte.
 UBICACION_EN_CURSO = "ubicacion_en_curso"
+
+# Cuantos reportes cercanos se muestran a la vez. Van ordenados del mas
+# cercano al mas lejano, asi que los primeros son los candidatos mas
+# probables; una lista mas larga que esto no se alcanza a leer antes de
+# decidir, y la decision aca es de un par de segundos.
+MAXIMO_EN_PANTALLA = 6
 
 
 class EntrarView(LoginView):
@@ -107,7 +115,9 @@ def ubicacion(request):
                 "latitud": form.cleaned_data["latitud"],
                 "longitud": form.cleaned_data["longitud"],
             }
-            return redirect("reportar")
+            # No va derecho a escribir el reporte: primero el sistema le
+            # muestra lo que ya hay reportado en ese lugar.
+            return redirect("cercanos")
     else:
         form = UbicacionForm()
 
@@ -115,8 +125,83 @@ def ubicacion(request):
 
 
 @login_required
+def cercanos(request):
+    """Paso 2 de 3: lo que ya esta reportado en ese lugar.
+
+    Es el paso que evita que el mismo bache entre diez veces. Antes de dejarlo
+    escribir un reporte nuevo, le mostramos los que ya existen alrededor: si
+    uno es el que venia a reportar, lo confirma y no se crea un duplicado.
+
+    Que la confirmacion viva aca y no en la pantalla de detalle es a proposito:
+    confirmar tiene sentido cuando la persona esta parada en el lugar, viendo
+    el desperfecto, no navegando el mapa desde la casa.
+    """
+    datos_ubicacion = request.session.get(UBICACION_EN_CURSO)
+    if not datos_ubicacion:
+        messages.info(request, "Primero marca dónde está el desperfecto.")
+        return redirect("ubicacion")
+
+    encontrados = reportes_cercanos(
+        datos_ubicacion["latitud"], datos_ubicacion["longitud"]
+    )
+
+    if request.method == "POST":
+        # Solo se puede confirmar algo que esta en esta misma pantalla. La
+        # lista de permitidos se rearma en vez de confiar en el id que llego:
+        # si no, con cualquier id se podria confirmar un reporte del otro lado
+        # de la ciudad sin haber estado nunca ahi.
+        permitidos = {
+            str(reporte.id): reporte
+            for reporte, _ in encontrados[:MAXIMO_EN_PANTALLA]
+            # El propio no: ya lo reporto, y volver a decir "a mi tambien me
+            # pasa" seria contarse dos veces.
+            if reporte.creador_id != request.user.id
+        }
+        reporte = permitidos.get(request.POST.get("reporte"))
+
+        if reporte is None:
+            # Pantalla vieja: lo que estaba ahi ya se atendio, o el id no es
+            # de ninguno de los que se le mostraron.
+            messages.info(request, "Ese reporte ya no está disponible para confirmar.")
+            return redirect("cercanos")
+
+        # get_or_create y no create: si apreta dos veces el boton, la segunda
+        # no revienta contra el candado que tiene el modelo.
+        Confirmacion.objects.get_or_create(reporte=reporte, usuario=request.user)
+
+        # El borrador de ubicacion ya no se usa: no va a escribir un reporte.
+        del request.session[UBICACION_EN_CURSO]
+
+        messages.success(request, "Listo, confirmaste el reporte.")
+        return redirect("detalle", reporte_id=reporte.id)
+
+    # Si no hay nada cerca, una pantalla vacia solo le suma un clic: se va
+    # derecho a escribir el reporte.
+    if not encontrados:
+        return redirect("reportar")
+
+    contexto = {
+        # La plantilla recibe los metros ya calculados junto a cada reporte,
+        # porque la distancia no es un campo de la base.
+        "cercanos": [
+            {
+                "reporte": reporte,
+                "metros": metros,
+                "confirmaciones": reporte.confirmacion_set.count(),
+                "lo_reporte_yo": reporte.creador_id == request.user.id,
+            }
+            for reporte, metros in encontrados[:MAXIMO_EN_PANTALLA]
+        ],
+        "direccion": datos_ubicacion["direccion_texto"],
+        "comuna": datos_ubicacion["comuna"],
+        "radio": RADIO_METROS,
+    }
+    return render(request, "reportes/cercanos.html", contexto)
+
+
+@login_required
 def reportar(request):
-    """Paso 2 de 3: que es el desperfecto, y la foto."""
+    """Paso 3 de 3: que es el desperfecto, y la foto."""
     # Sin el paso 1 no hay donde poner el reporte, asi que lo devolvemos.
     datos_ubicacion = request.session.get(UBICACION_EN_CURSO)
     if not datos_ubicacion:
@@ -167,16 +252,32 @@ def reportar(request):
 
 @login_required
 def mis_reportes(request):
-    # Solo los reportes del usuario que inicio sesion, del mas nuevo al mas viejo.
+    """Lo que la persona esta siguiendo, del mas nuevo al mas viejo.
+
+    Son los reportes que hizo y tambien los que confirmo. Si confirmar no
+    dejara el reporte en esta lista, quien confirma perderia de vista el
+    desperfecto y le convendria mas crear uno propio, que es justo lo que el
+    paso 2 trata de evitar.
+    """
+    # distinct() porque un reporte propio que ademas confirmo calzaria con los
+    # dos lados del OR y saldria dos veces en la lista.
     # select_related trae la categoria y la ubicacion en la misma consulta,
-    # para no pegarle a la base una vez por cada fila de la lista.
+    # para no pegarle a la base una vez por cada fila.
     reportes = (
         Reporte.objects
-        .filter(creador=request.user)
+        .filter(Q(creador=request.user) | Q(confirmacion__usuario=request.user))
         .select_related("categoria", "ubicacion")
+        .distinct()
         .order_by("-fecha_creacion")
     )
+
+    # La tarjeta marca los que no son propios, para que se entienda por que
+    # aparecen en la lista.
+    for reporte in reportes:
+        reporte.lo_reporte_yo = reporte.creador_id == request.user.id
+
     return render(request, 'reportes/mis_reportes.html', {"reportes": reportes})
+
 @login_required
 def mas_detalle(request):
     return render(request, 'reportes/mas_detalle.html')
@@ -216,3 +317,45 @@ def actualizar_estado(request):
 
 def terminos(request):
     return render(request, 'reportes/terminos.html')
+
+
+@login_required
+def detalle(request, reporte_id):
+    """El seguimiento de un reporte: en que esta y que le ha pasado.
+
+    Pide sesion igual que el resto del flujo. El mapa de la portada se puede
+    ver sin cuenta, pero ahi solo hay un pin con la categoria; la descripcion y
+    la foto las escribio una persona y no tienen por que quedar abiertas.
+
+    Del historial se muestra el que y el cuando, no el quien: los cambios de
+    estado los hace una cuenta municipal y su nombre no le aporta nada a quien
+    reporto.
+    """
+    reporte = get_object_or_404(
+        Reporte.objects.select_related("categoria", "ubicacion"), pk=reporte_id
+    )
+
+    # CambioEstado guarda el codigo del estado ("en_revision") y no tiene
+    # choices, asi que no hay get_estado_nuevo_display: la etiqueta hay que
+    # buscarla en la misma lista que usa Reporte, para que la pantalla no
+    # muestre guiones bajos.
+    etiquetas = dict(Reporte.ESTADOS)
+
+    contexto = {
+        "reporte": reporte,
+        # Del mas viejo al mas nuevo: asi se lee como una historia.
+        "historial": [
+            {
+                "estado": etiquetas.get(cambio.estado_nuevo, cambio.estado_nuevo),
+                "comentario": cambio.comentario,
+                "fecha": cambio.fecha,
+            }
+            for cambio in reporte.cambioestado_set.order_by("fecha")
+        ],
+        "confirmaciones": reporte.confirmacion_set.count(),
+        "lo_reporte_yo": reporte.creador_id == request.user.id,
+        "lo_confirme_yo": reporte.confirmacion_set.filter(
+            usuario=request.user
+        ).exists(),
+    }
+    return render(request, "reportes/detalle.html", contexto)
