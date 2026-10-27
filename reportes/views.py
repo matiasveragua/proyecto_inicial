@@ -12,43 +12,29 @@ from .cercania import RADIO_METROS, reportes_cercanos
 from .forms import RegistroForm, ReporteForm, UbicacionForm
 from .models import Confirmacion, Reporte
 
-# Clave con la que guardamos la ubicacion del paso 1 mientras el usuario
-# completa el paso 2. Va en la sesion y no en la base, porque un reporte a
-# medio llenar todavia no es un reporte.
 UBICACION_EN_CURSO = "ubicacion_en_curso"
 
-# Cuantos reportes cercanos se muestran a la vez. Van ordenados del mas
-# cercano al mas lejano, asi que los primeros son los candidatos mas
-# probables; una lista mas larga que esto no se alcanza a leer antes de
-# decidir, y la decision aca es de un par de segundos.
+# Cuantos reportes cercanos se muestran a la vez.
 MAXIMO_EN_PANTALLA = 6
 
 
 class EntrarView(LoginView):
-    """Iniciar sesion usando la pantalla que diseño Bastian.
-
-    Django trae toda la logica (revisar la clave, crear la sesion, respetar
-    el ?next=); lo unico que le cambiamos es que plantilla dibujar.
-    """
+    #Iniciar sesion
 
     template_name = "reportes/login.html"
     redirect_authenticated_user = True
 
 
 def inicio(request):
-    """La portada: el mapa con los reportes y los dos botones."""
     hace_una_semana = timezone.now() - timedelta(days=7)
 
-    # Los reportes que se dibujan como pines en el mapa. Son los de todos, no
-    # solo los del usuario: la gracia es ver lo que pasa en el barrio.
+    # Los reportes que se dibujan como pines en el mapa.
     reportes = (
         Reporte.objects
         .select_related("categoria", "ubicacion")
         .order_by("-fecha_creacion")[:100]
     )
 
-    # json_script en la plantilla necesita algo simple, por eso una lista de
-    # diccionarios y no los objetos.
     puntos = [
         {
             "lat": r.ubicacion.latitud,
@@ -68,8 +54,6 @@ def inicio(request):
         ).count(),
     }
 
-    # El nombre de usuario es el correo; para saludar basta lo que va antes
-    # del arroba.
     if request.user.is_authenticated:
         contexto["saludo"] = request.user.username.split("@")[0]
 
@@ -98,12 +82,7 @@ def registro(request):
 
 @login_required
 def ubicacion(request):
-    """Paso 1 de 3: donde esta el desperfecto.
 
-    Todavia no escribimos nada en la base. La direccion queda en la sesion y
-    recien en el paso 2, cuando el reporte esta completo, se guardan los dos
-    juntos. Asi no quedan ubicaciones huerfanas de gente que se arrepintio.
-    """
     if request.method == "POST":
         form = UbicacionForm(request.POST)
         if form.is_valid():
@@ -126,16 +105,7 @@ def ubicacion(request):
 
 @login_required
 def cercanos(request):
-    """Paso 2 de 3: lo que ya esta reportado en ese lugar.
 
-    Es el paso que evita que el mismo bache entre diez veces. Antes de dejarlo
-    escribir un reporte nuevo, le mostramos los que ya existen alrededor: si
-    uno es el que venia a reportar, lo confirma y no se crea un duplicado.
-
-    Que la confirmacion viva aca y no en la pantalla de detalle es a proposito:
-    confirmar tiene sentido cuando la persona esta parada en el lugar, viendo
-    el desperfecto, no navegando el mapa desde la casa.
-    """
     datos_ubicacion = request.session.get(UBICACION_EN_CURSO)
     if not datos_ubicacion:
         messages.info(request, "Primero marca dónde está el desperfecto.")
@@ -153,23 +123,19 @@ def cercanos(request):
         permitidos = {
             str(reporte.id): reporte
             for reporte, _ in encontrados[:MAXIMO_EN_PANTALLA]
-            # El propio no: ya lo reporto, y volver a decir "a mi tambien me
-            # pasa" seria contarse dos veces.
+
             if reporte.creador_id != request.user.id
         }
         reporte = permitidos.get(request.POST.get("reporte"))
 
         if reporte is None:
-            # Pantalla vieja: lo que estaba ahi ya se atendio, o el id no es
-            # de ninguno de los que se le mostraron.
+
             messages.info(request, "Ese reporte ya no está disponible para confirmar.")
             return redirect("cercanos")
 
-        # get_or_create y no create: si apreta dos veces el boton, la segunda
-        # no revienta contra el candado que tiene el modelo.
+
         Confirmacion.objects.get_or_create(reporte=reporte, usuario=request.user)
 
-        # El borrador de ubicacion ya no se usa: no va a escribir un reporte.
         del request.session[UBICACION_EN_CURSO]
 
         messages.success(request, "Listo, confirmaste el reporte.")
@@ -201,8 +167,6 @@ def cercanos(request):
 
 @login_required
 def reportar(request):
-    """Paso 3 de 3: que es el desperfecto, y la foto."""
-    # Sin el paso 1 no hay donde poner el reporte, asi que lo devolvemos.
     datos_ubicacion = request.session.get(UBICACION_EN_CURSO)
     if not datos_ubicacion:
         messages.info(request, "Primero marca dónde está el desperfecto.")
@@ -212,9 +176,6 @@ def reportar(request):
         # request.POST trae los campos de texto, request.FILES trae la foto.
         form = ReporteForm(request.POST, request.FILES)
 
-        # La ubicacion vuelve a pasar por el formulario: no confiamos en la
-        # sesion a ojos cerrados, y asi un dato invalido nos manda de vuelta
-        # al paso 1 en vez de reventar al guardar.
         form_ubicacion = UbicacionForm(datos_ubicacion)
 
         if not form_ubicacion.is_valid():
@@ -225,15 +186,11 @@ def reportar(request):
         if form.is_valid():
             ubicacion_guardada = form_ubicacion.save()
 
-            # commit=False arma el objeto pero todavia no lo escribe en la base,
-            # asi alcanzamos a ponerle los campos que no vienen del formulario.
             reporte = form.save(commit=False)
             reporte.ubicacion = ubicacion_guardada
             reporte.creador = request.user
             reporte.save()
 
-            # El borrador ya es un reporte de verdad; limpiamos la sesion para
-            # que el proximo reporte empiece de cero.
             del request.session[UBICACION_EN_CURSO]
 
             messages.success(request, "Tu reporte quedó registrado.")
@@ -252,13 +209,7 @@ def reportar(request):
 
 @login_required
 def mis_reportes(request):
-    """Lo que la persona esta siguiendo, del mas nuevo al mas viejo.
 
-    Son los reportes que hizo y tambien los que confirmo. Si confirmar no
-    dejara el reporte en esta lista, quien confirma perderia de vista el
-    desperfecto y le convendria mas crear uno propio, que es justo lo que el
-    paso 2 trata de evitar.
-    """
     # distinct() porque un reporte propio que ademas confirmo calzaria con los
     # dos lados del OR y saldria dos veces en la lista.
     # select_related trae la categoria y la ubicacion en la misma consulta,
@@ -271,8 +222,6 @@ def mis_reportes(request):
         .order_by("-fecha_creacion")
     )
 
-    # La tarjeta marca los que no son propios, para que se entienda por que
-    # aparecen en la lista.
     for reporte in reportes:
         reporte.lo_reporte_yo = reporte.creador_id == request.user.id
 
@@ -321,24 +270,11 @@ def terminos(request):
 
 @login_required
 def detalle(request, reporte_id):
-    """El seguimiento de un reporte: en que esta y que le ha pasado.
 
-    Pide sesion igual que el resto del flujo. El mapa de la portada se puede
-    ver sin cuenta, pero ahi solo hay un pin con la categoria; la descripcion y
-    la foto las escribio una persona y no tienen por que quedar abiertas.
-
-    Del historial se muestra el que y el cuando, no el quien: los cambios de
-    estado los hace una cuenta municipal y su nombre no le aporta nada a quien
-    reporto.
-    """
     reporte = get_object_or_404(
         Reporte.objects.select_related("categoria", "ubicacion"), pk=reporte_id
     )
 
-    # CambioEstado guarda el codigo del estado ("en_revision") y no tiene
-    # choices, asi que no hay get_estado_nuevo_display: la etiqueta hay que
-    # buscarla en la misma lista que usa Reporte, para que la pantalla no
-    # muestre guiones bajos.
     etiquetas = dict(Reporte.ESTADOS)
 
     contexto = {
