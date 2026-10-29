@@ -29,13 +29,18 @@ urlpatterns = [
     # <int:...> deja pasar solo numeros, asi /reporte/abc/ es un 404 y la
     # vista recibe un entero y no un texto.
     path('reporte/<int:reporte_id>/', views.detalle, name='detalle'),
+    path('mas-detalle/', views.mas_detalle, name='mas_detalle'),
+    path('panel-municipal/', views.panel_municipal, name='panel_municipal'),
 
     path('accounts/registro/', views.registro, name='registro'),
     # Trae gratis /accounts/login/ y /accounts/logout/ de Django.
     # LoginView usa reportes/login.html, que es la pantalla que hizo Bastian.
     path('accounts/login/', views.EntrarView.as_view(), name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('terminos/', views.terminos, name='terminos'),
+    path('actualizar-estado/', views.actualizar_estado, name='actualizar_estado'),
 ]
 
 # En desarrollo, servir las fotos subidas desde /media/
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
