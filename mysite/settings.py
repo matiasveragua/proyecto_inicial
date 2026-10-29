@@ -27,6 +27,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# Para demostrar la aplicacion desde el telefono con ngrok. Django compara
+# el Origin de cada POST contra el host y rechaza lo que no reconoce; sin
+# esto, iniciar sesion o registrarse responde 403 Origin checking failed.
+# El comodin es necesario porque el subdominio cambia en cada arranque.
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok-free.app',
+]
+
 
 # Application definition
 
