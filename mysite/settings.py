@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -112,24 +113,31 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Django manda por defecto Referrer-Policy: same-origin, y con esa politica el
+# navegador no envia Referer a otro dominio. OpenStreetMap exige uno en su
+# politica de uso de tiles y, si no llega, devuelve una imagen que dice
+# "Access blocked" en vez del mapa. Con strict-origin-when-cross-origin se
+# envia solo el origen (sin la ruta), que es lo que pide OSM y lo que usan los
+# navegadores por defecto.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
 
 # Archivos subidos por los usuarios (fotos de los reportes)
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# El aviso de cambio de estado se imprime en la consola del servidor.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'avisos@gevi.cl'
 
 # A donde se va el usuario despues de iniciar o cerrar sesion.
 # Al inicio y no derecho a reportar: el reporte parte en /ubicacion/.

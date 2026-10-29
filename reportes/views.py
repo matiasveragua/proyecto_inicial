@@ -1,16 +1,19 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .cercania import RADIO_METROS, reportes_cercanos
 from .forms import RegistroForm, ReporteForm, UbicacionForm
-from .models import Confirmacion, Reporte
+from .models import CambioEstado, Confirmacion, Perfil, Reporte
 
 # Clave con la que guardamos la ubicacion del paso 1 mientras el usuario
 # completa el paso 2. Va en la sesion y no en la base, porque un reporte a
@@ -319,3 +322,126 @@ def detalle(request, reporte_id):
         ).exists(),
     }
     return render(request, "reportes/detalle.html", contexto)
+@login_required
+def mas_detalle(request):
+    return render(request, 'reportes/mas_detalle.html')
+
+def perfil_de(usuario):
+    return Perfil.objects.filter(usuario=usuario).first()
+
+
+def exigir_gestor(request):
+    perfil = perfil_de(request.user)
+    if perfil is None or not perfil.es_gestor:
+        raise PermissionDenied("Esta pantalla es solo para gestores municipales.")
+    return perfil
+
+
+def destinatarios_de(reporte):
+    """A quien le importa este reporte: quien lo creo y quienes lo confirmaron."""
+    correos = {reporte.creador.email or reporte.creador.username}
+    for confirmacion in reporte.confirmacion_set.select_related("usuario"):
+        usuario = confirmacion.usuario
+        correos.add(usuario.email or usuario.username)
+    return sorted(correo for correo in correos if "@" in correo)
+
+
+def avisar_del_cambio(reporte, nuevo_estado, comentario):
+    correos = destinatarios_de(reporte)
+    if not correos:
+        return 0
+
+    etiqueta = dict(Reporte.ESTADOS).get(nuevo_estado, nuevo_estado)
+    lineas = [
+        f"El reporte de {reporte.categoria} en {reporte.ubicacion} "
+        f"pasó a {etiqueta}.",
+    ]
+    if comentario:
+        lineas.append(f"Comentario del municipio: {comentario}")
+    lineas.append(f"Puedes ver el seguimiento en /reporte/{reporte.id}/")
+
+    # fail_silently: que un problema con el correo no deje el estado sin cambiar.
+    send_mail(
+        subject=f"Tu reporte #{reporte.id} pasó a {etiqueta}",
+        message="\n\n".join(lineas),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=correos,
+        fail_silently=True,
+    )
+    return len(correos)
+
+
+@login_required
+def panel_municipal(request):
+    perfil = exigir_gestor(request)
+
+    reportes = Reporte.objects.select_related("categoria", "ubicacion")
+    if perfil.comuna:
+        reportes = reportes.filter(ubicacion__comuna__iexact=perfil.comuna)
+    reportes = list(reportes.order_by("-fecha_creacion"))
+
+    ahora = timezone.now()
+    for reporte in reportes:
+        reporte.dias_antiguedad = (ahora - reporte.fecha_creacion).days
+
+    def cuantos(estado):
+        return sum(1 for reporte in reportes if reporte.estado_actual == estado)
+
+    contexto = {
+        'reportes': reportes,
+        'total_recibidos': cuantos("recibido"),
+        'total_revision': cuantos("en_revision"),
+        'total_atendidos': cuantos("atendido"),
+        'comuna': perfil.comuna,
+    }
+    return render(request, 'reportes/panel_municipal.html', contexto)
+
+
+@login_required
+def actualizar_estado(request):
+    perfil = exigir_gestor(request)
+    if request.method != 'POST':
+        return redirect('panel_municipal')
+
+    reporte = get_object_or_404(
+        Reporte.objects.select_related("categoria", "ubicacion"),
+        pk=request.POST.get('reporte_id'),
+    )
+    if perfil.comuna and reporte.ubicacion.comuna.lower() != perfil.comuna.lower():
+        raise PermissionDenied("Ese reporte no es de tu comuna.")
+
+    nuevo_estado = request.POST.get('estado_rep')
+    if nuevo_estado not in dict(Reporte.ESTADOS):
+        messages.error(request, "Ese estado no existe.")
+        return redirect('panel_municipal')
+
+    comentario = (request.POST.get('comentario') or "").strip()
+    if nuevo_estado == "descartado" and not comentario:
+        messages.error(request, "Para descartar hay que explicar por qué.")
+        return redirect('panel_municipal')
+
+    estado_anterior = reporte.estado_actual
+    if nuevo_estado == estado_anterior:
+        return redirect('panel_municipal')
+
+    reporte.estado_actual = nuevo_estado
+    reporte.save(update_fields=["estado_actual"])
+    CambioEstado.objects.create(
+        reporte=reporte,
+        gestor=request.user,
+        estado_anterior=estado_anterior,
+        estado_nuevo=nuevo_estado,
+        comentario=comentario,
+    )
+
+    avisados = avisar_del_cambio(reporte, nuevo_estado, comentario)
+    messages.success(
+        request,
+        f"Reporte #{reporte.id} actualizado. Se avisó a {avisados} persona(s)."
+        if avisados else f"Reporte #{reporte.id} actualizado.",
+    )
+    return redirect('panel_municipal')
+
+
+def terminos(request):
+    return render(request, 'reportes/terminos.html')
