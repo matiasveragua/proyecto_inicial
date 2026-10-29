@@ -42,10 +42,8 @@
         position: absolute;
         inset: 0;
         overflow: hidden;
-        contain: strict;   /* nada de Leaflet puede afectar el layout de afuera */
-}
-
-    
+        contain: strict;   
+    }
     .inferior-panel {
         background-color: var(--fondo-pantalla);
         border-radius: 26px 26px 0 0 ;
@@ -332,6 +330,84 @@
             height: 100% !important;
         }
     }
+
+    /* Contenedor de los botones de filtro */
+    .filters-dropdown-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2010;
+    }
+    .custom-filter.btn {
+        background-color: var(--fondo-tarjeta);
+        color: var(--texto-secundario);
+        border: none;
+        padding: 10px 18px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.2 ease;
+    }
+    .custom-filter.btn svg {
+        width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+        transition: transform 0.3s ease;
+    }
+    .custom-filter.btn.activate {
+        background-color: var(--texto-principal);
+        color: var(--fondo-pantalla);
+    }
+    .custom-filter.btn.activate svg { transform: rotate(180deg);}
+    .blur-overlay {
+        position: absolute; inset: 0;
+        background: rgba(0,0,0,0.15);
+        backdrop-filter: blur(8px);
+        z-index: 2050;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3 ease;
+    }
+    .blur-overlay.show {display: block; opacity: 1;}
+    .bottom-sheet-menu {
+        position: absolute; top: 0; left: 0; right: 0;
+        background-color: var(--fondo-tarjeta);
+        border-radius: 20px;
+        padding: 20px 20px 24px;
+        z-index: 2100;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(20px);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        display: flex; flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .bottom-sheet-menu.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .bs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(150,150,150,0.15); padding-bottom: 14px;}
+    .bs-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--texto-principal); }
+    .bs-btn-clear { background: none; border: none; color: var(--amarillo-vial); font-size: 15px; font-weight: 600; cursor: pointer; }
+    
+    .bs-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; max-height: 40vh; overflow-y: auto;}
+    .bs-option { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer; border-bottom: 1px solid rgba(150,150,150,0.08); }
+    .bs-option:last-child { border-bottom: none; }
+    .bs-text { font-size: 15px; font-weight: 600; color: var(--texto-principal); }
+    
+    .hidden-radio { display: none; }
+    .custom-check { 
+        width: 22px; height: 22px; border-radius: 6px; 
+        border: 2px solid var(--texto-secundario); 
+        display: grid; place-items: center; transition: all 0.2s; 
+    }
+    .custom-check svg { stroke: #1B2430; stroke-width: 3; width: 14px; height: 14px; fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform: scale(0.5); transition: all 0.2s;}
+    
+    .hidden-radio:checked + .custom-check { background-color: var(--amarillo-vial); border-color: var(--amarillo-vial); }
+    .hidden-radio:checked + .custom-check svg { opacity: 1; transform: scale(1); }
+    
+    .bs-apply { width: 100%; background-color: var(--amarillo-vial); color: #1B2430; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; }
 </style>
 <!-- Zona superior (El mapa) -->
 <div class="mapa-fondo">
@@ -401,48 +477,111 @@
             </div>
         </div>
         
-        <div class="chips">
-            <span class="fchip on">Todos</span>
-            <span class="fchip">Recibido</span>
-            <span class="fchip">En revisión</span>
+        <!--Botones de filtros-->
+        <div class="filters-dropdown-container">
+            <button id="btn-filter-type" class="custom-filter btn" onclick="openMenu('type')">
+                <span>Tipo</span>
+                <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <button id="btn-filter-status" class="custom-filter btn" onclick="openMenu('status')">
+                <span>Estado</span>
+                <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
         </div>
-        
-        <div class="report-scroll" id="lista-reportes">
-            {% if report_list %}           
-                <div class="group">
-                    {% for report in report_list %}
-                        <div class="rep">
-                            <span class="thumb"></span>
-                            <span class="t">
-                                <b>{{ report.title|default:"Desperfecto reportado" }}</b>
-                                <span class="a">{{ report.direction|default:"Cerca de ti" }}</span>
-                                <span class="tag o"><i></i>En revisión</span>
-                            </span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty">
-                    <div class="ic">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/>
-                        </svg>
-                    </div>
-                    <h3>Sin reportes cercanos</h3>
-                    <p>Parece que todo está en orden por aquí. ¡Navega por el mapa para explorar!</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
 
-    <!-- Botón principal -->
+<!-- Contenedor dinámico de la lista -->
+        <div style="position: relative; flex: 1; display: flex; flex-direction:column; min-height: 0; margin: 0 -20px; padding: 0 20px;">
+            <div class="report-scroll" id="lista-reportes">
+                <!-- Javascript cargará aquí los reportes -->
+            </div>
+        </div>
+
+    </div> 
+
+
+    <!-- BOTÓN DE REPORTAR-->
     <a href="{% url 'reportar' %}" class="principal-btn" style="text-decoration: none;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-            <path d="M12 5v14M5 12h14"/>
+        <path d="M12 5v14M5 12h14"/>
         </svg>
         Reportar desperfecto
     </a>  
-</div>
+
+    <div id="filters-overlay" class="blur-overlay" onclick="closeMenus()"></div>
+    
+    <!-- Menu "tipo" -->
+    <div id="bottom-sheet-type" class="bottom-sheet-menu">
+        <div class="bs-header">
+            <h3>Tipo de reporte</h3>
+            <button class="bs-btn-clear" onclick="clearFilter('type')">Limpiar</button>
+        </div>
+        <div class="bs-options">
+            <label class="bs-option">
+                <span class="bs-text">Bache</span>
+                <input type="radio" name="radio-type" value="bache o calzada rota" class="hidden-radio" onclick="selectOption(this, 'type')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+            <label class="bs-option">
+                <span class="bs-text">Vereda dañada</span>
+                <input type="radio" name="radio-type" value="Vereda dañada" class="hidden-radio" onclick="selectOption(this, 'type')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+            <label class="bs-option">
+                <span class="bs-text">Semáforo</span>
+                <input type="radio" name="radio-type" value="Semáforo o señalética" class="hidden-radio" onclick="selectOption(this, 'type')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+            <label class="bs-option">
+                <span class="bs-text">Poste</span>
+                <input type="radio" name="radio-type" value="Cable o poste" class="hidden-radio" onclick="selectOption(this, 'type')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+            <label class="bs-option">
+                <span class="bs-text">Árbol con riesgo de caída</span>
+                <input type="radio" name="radio-type" value="Árbol con riesgo de caída" class="hidden-radio" onclick="selectOption(this, 'type')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+            <label class="bs-option">
+                <span class="bs-text">Otro</span>
+                <input type="radio" name="radio-type" value="Otro" class="hidden-radio" onclick="selectOption(this, 'type')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+        </div>
+        <div class="bs-footer">
+            <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
+        </div>
+    </div>
+    
+    <!--Menu estado-->
+    <div id="bottom-sheet-status" class="bottom-sheet-menu">
+        <div class="bs-header">
+            <h3>Estado del reporte</h3>
+            <button class="bs-btn-clear" onclick="clearFilter('status')">Limpiar</button>
+        </div>
+        <div class="bs-options">
+            <label class="bs-option">
+                <span class="bs-text">Recibido</span>
+                <input type="radio" name="radio-status" value="Recibido" class="hidden-radio" onclick="selectOption(this, 'status')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>  
+            </label>
+            <label class="bs-option">
+                <span class="bs-text">En revisión</span>
+                <input type="radio" name="radio-status" value="En revisión" class="hidden-radio" onclick="selectOption(this, 'status')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+            <label class="bs-option">
+                <span class="bs-text">Atendido</span>
+                <input type="radio" name="radio-status" value="Atendido" class="hidden-radio" onclick="selectOption(this, 'status')">
+                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </label>
+        </div>
+        <div class="bs-footer">
+            <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
+        </div>
+    </div>
+
+</div> 
+
 
 
 
@@ -478,7 +617,7 @@
 
         panel.addEventListener('touchend', function(e) {
             let toqueFinY = e.changedTouches[0].screenY;
-            let diferencia = toqueInicioY - toqueFinY; // Positivo = arrastre hacia arriba
+            let diferencia = toqueInicioY - toqueFinY; 
 
             if (diferencia > 40 && panel.classList.contains('low')) {
                 togglePanel();
@@ -493,6 +632,51 @@
         }, {passive: true});
     });
 </script>
+
+<!--  SCRIPT PARA LOS MENÚS DE FILTROS -->
+<script>
+    let currentTypeFilter = 'Todos';
+    let currentStatusFilter = 'Todos';
+    function openMenu(menuType) {
+        const menu = document.getElementById(`bottom-sheet-${menuType}`);
+        const isOpen = menu.classList.contains('show');
+        closeMenus(); 
+    
+        if (!isOpen) { // Si no estaba abierto, lo abrimos
+        document.getElementById(`btn-filter-${menuType}`).classList.add('activate');
+        menu.classList.add('show');
+        document.getElementById('filters-overlay').classList.add('show');
+        }
+    }
+    function closeMenus() {
+        document.querySelectorAll('.custom-filter.btn').forEach(btn => btn.classList.remove('activate'));
+        document.querySelectorAll('.bottom-sheet-menu').forEach(menu => menu.classList.remove('show'));
+        document.getElementById('filters-overlay').classList.remove('show');
+    }
+    function selectOption(inputElement, menuType) {
+        const optionText = inputElement.parentElement.querySelector('.bs-text').innerText;
+        const shortText = optionText.split(' ')[0]; 
+        document.querySelector(`#btn-filter-${menuType} span`).innerText = `${menuType === 'type' ? 'Tipo' : 'Estado'} · ${shortText}`;
+    }
+    function clearFilter(menuType) {
+        const radioInputs = document.querySelectorAll(`input[name="radio-${menuType}"]`);
+        radioInputs.forEach(radio => radio.checked = false);
+        document.querySelector(`#btn-filter-${menuType} span`).innerText = menuType === 'type' ? 'Tipo' : 'Estado';
+        if (menuType === 'type') currentTypeFilter = 'Todos';
+        if (menuType === 'status') currentStatusFilter = 'Todos';
+        closeMenus();
+        loadNearbyReports(currentLat, currentLon, currentRadius);
+    }
+    function applyFilters() {
+        const selectedType = document.querySelector('input[name="radio-type"]:checked');
+        const selectedStatus = document.querySelector('input[name="radio-status"]:checked');
+        currentTypeFilter = selectedType ? selectedType.value : 'Todos';
+        currentStatusFilter = selectedStatus ? selectedStatus.value : 'Todos';
+        closeMenus();
+        loadNearbyReports(currentLat, currentLon, currentRadius); // Recarga los marcadores del mapa
+    }
+</script>
+
 
 {{ puntos|json_script:"datos-reportes" }}
 
@@ -521,6 +705,10 @@
             fillOpacity: 1,
             radius: 7
         }).addTo(mapa);
+        var markerLayer = L.layerGroup().addTo(mapa);
+        var currentLat = -33.449034;
+        var currentLon = -70.672983;
+        var currentRadius = 500;
 
         // --- PINES DINÁMICOS ---
         const COLOR_ESTADO = {
@@ -681,49 +869,73 @@
         };
 
         function loadNearbyReports(centerLat, centerLon, radiusMeters){
-            const reportsData = document.getElementById('datos-reportes');
-            if (!reportsData) return;
-            const pointsArray = JSON.parse(reportsData.textContent);
-            const centerLocation = L.latLng(centerLat, centerLon);
-            let nearbyCount = 0;
-            let reportsHtml = '';
+                const reportsData = document.getElementById('datos-reportes');
+                if (!reportsData) return;
+                const pointsArray = JSON.parse(reportsData.textContent);
+                const centerLocation = L.latLng(centerLat, centerLon);
+                let nearbyCount = 0;
+                let reportsHtml = '';
 
-            pointsArray.forEach(function (p) {
-                const reportPos = L.latLng(p.lat, p.lon);
-                const distance = centerLocation.distanceTo(reportPos);
-                if (distance <= radiusMeters) {
-                    nearbyCount++;
-                    let dimension = 42
-                    if (p.gravedad == 'Alta') dimension = 52;
-                    if (p.gravedad == 'Baja') dimension = 32;
+                markerLayer.clearLayers();
 
-                    const selectedSvg = ICONOS_SVG[p.categoria] || ICONOS_SVG['default'];
-                    const pintHtml = `<div class="marker-pin">${selectedSvg}</div>`;
-                    const customIcon = L.divIcon({
-                        html: pintHtml,
-                        className: '',
-                        iconSize: [dimension, dimension],
-                        iconAnchor: [dimension / 2, dimension / 2],
-                        popupAnchor: [0, -dimension / 2]
-                    });
-                    const popupText = '<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + (p.etiqueta || '') + '<br><span style="color:#f08a24; font-weight:bold;">A ' + Math.round(distance) + ' metros de ti</span>';
-                    L.marker([p.lat, p.lon], { icon: customIcon}).bindPopup(popupText).addTo(mapa);
-                    let statusText = p.estado || "En revisión";
-                    let tagColor = "o";
-                    if (statusText === "Recibido") tagColor = "b";
-                    if (statusText === "Atendido") tagColor = "g";
-                    reportsHtml += `
-                        <div class="rep">
-                            <span class="thumb"></span>
-                            <span class="t">
-                                <b>${p.categoria || "Desperfecto"}</b>
-                                <span class="a">${p.comuna || ""} - A ${Math.round(distance)}m</span>
-                                <span class="tag ${tagColor}"><i></i>${statusText}</span>
-                            </span>
-                        </div> 
-                    `;
-                }
-            });
+                const statusFilter = currentStatusFilter;
+                const typeFilter = currentTypeFilter;                
+                    const ESTADOS_TEXTO = {
+                        'recibido': 'Recibido',
+                        'en_revision': 'En revisión',
+                        'atendido': 'Atendido',
+                        'descartado': 'Descartado'
+                };
+
+                    pointsArray.forEach(function (p) {
+                        let estadoRaw = p.estado ? p.estado.toLowerCase() : 'en_revision';
+                        let statusText = ESTADOS_TEXTO[estadoRaw] || p.estado || "En revisión";
+                        let typeText = p.categoria || "Desconocido"; 
+                        if (statusFilter !== 'Todos' && statusFilter !== 'Todos los estados' && statusText !== statusFilter) {
+                            return;
+                        }
+                        if (typeFilter !== 'Todos' && typeFilter !== 'Todos los tipos' && typeText !== typeFilter) {
+                            return;
+                        }
+
+                    const reportPos = L.latLng(p.lat, p.lon);
+                    const distance = centerLocation.distanceTo(reportPos);
+                    if (distance <= radiusMeters) {
+                        nearbyCount++;
+                        let dimension = 42
+                        if (p.gravedad == 'Alta') dimension = 52;
+                        if (p.gravedad == 'Baja') dimension = 32;
+
+                        const selectedSvg = ICONOS_SVG[p.categoria] || ICONOS_SVG['default'];
+                        const pintHtml = `<div class="marker-pin">${selectedSvg}</div>`;
+                        const customIcon = L.divIcon({
+                            html: pintHtml,
+                            className: '',
+                            iconSize: [dimension, dimension],
+                            iconAnchor: [dimension / 2, dimension / 2],
+                            popupAnchor: [0, -dimension / 2]
+                        });
+                        const popupText = '<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + (p.etiqueta || '') + '<br><span style="color:#f08a24; font-weight:bold;">A ' + Math.round(distance) + ' metros de ti</span>';
+                    
+                        L.marker([p.lat, p.lon], { icon: customIcon}).bindPopup(popupText).addTo(markerLayer);
+                    
+                        let tagColor = "o";
+                        if (statusText === "Recibido") tagColor = "b";
+                        if (statusText === "Atendido") tagColor = "g";
+                        reportsHtml += `
+                            <div class="rep">
+                                <span class="thumb"></span>
+                                <span class="t">
+                                    <b>${p.categoria || "Desperfecto"}</b>
+                                    <span class="a">${p.comuna || ""} - A ${Math.round(distance)}m</span>
+                                    <span class="tag ${tagColor}"><i></i>${statusText}</span>
+                                </span>
+                            </div> 
+                        `;
+                    }
+                });
+            
+
         document.getElementById('contador-contraido').textContent = `${nearbyCount} reportes en tu zona`;
         document.getElementById('contador-expandido').textContent = `${nearbyCount} reportes en tu zona`;
 
@@ -747,26 +959,26 @@
         }
         
         // Solicitar Ubi
-        /*if (navigator.geolocation) {
+        if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    blueDot.setLatLng([lat, lon]);
+                    currentLat = position.coords.latitude;
+                    currentLon = position.coords.longitude;
+                    blueDot.setLatLng([currentLat, currentLon]);
                     const searchRadius = 500;
-                    let circleArea = L.circle([lat, lon],{
+                    let circleArea = L.circle([currentLat, currentLon],{
                         color: '#3478f6',
                         fillColor: '#3478f6',
                         fillOpacity: 0.08,
                         weight: 1,
                         radius: searchRadius
                     }).addTo(mapa);
-                    mapa.setView([lat, lon], 15.4);
-                    loadNearbyReports(lat, lon, searchRadius);
+                    mapa.setView([currentLat, currentLon], 15.4);
+                    loadNearbyReports(currentLat, currentLon, searchRadius);
                 },
                 function(error) {
                     console.warn("No se pudo obtener la ubicación: ", error.message);
-                    loadNearbyReports(-33.4489, -70.6693, 50000);
+                    loadNearbyReports(currentLat, currentLon, currentRadius);
                 },
                 {
                     enableHighAccuracy: true,
@@ -775,12 +987,15 @@
                 }
             );
         } else {
-            loadNearbyReports(-33.4489, -70.6693, 50000);
+            loadNearbyReports(currentLat, currentLon, currentRadius);
         }
-        */
+        
+
+
+        /*
         // Ubi para pruebas
-        const latPrueba = -33.453840; // Reemplaza con la latitud que quieras probar
-        const lonPrueba = -70.677135; // Reemplaza con la longitud que quieras probar
+        const latPrueba = -33.449034; // Reemplaza con la latitud que quieras probar
+        const lonPrueba = -70.672983; // Reemplaza con la longitud que quieras probar
         const searchRadius = 500;
 
         blueDot.setLatLng([latPrueba, lonPrueba]);
@@ -793,7 +1008,9 @@
         }).addTo(mapa);
         mapa.setView([latPrueba, lonPrueba], 17);
         loadNearbyReports(latPrueba, lonPrueba, searchRadius);
+         */
 
+        setTimeout(function() { mapa.invalidateSize(); }, 100);
         setTimeout(function() { mapa.invalidateSize(); }, 100);
 
 
@@ -834,10 +1051,13 @@
         if (btnLeyenda) {
             btnLeyenda.addEventListener('click', function(e) {
                 e.preventDefault();
+                const panel = document.getElementById('panel-inferior');
+                if (panel.classList.contains('expanded-panel')){
+                    return;
+                }
                 btnLeyenda.classList.toggle('on');
-                
                 if (popupLeyenda.style.display === 'none' || popupLeyenda.style.display === '') {
-                    popupLeyenda.style.display = 'flex';
+                    popupLeyenda.style.display = 'flex' ;
                 } else {
                     popupLeyenda.style.display = 'none';
                 }
