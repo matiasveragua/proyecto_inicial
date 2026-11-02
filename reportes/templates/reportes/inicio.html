@@ -338,7 +338,7 @@
         margin-bottom: 12px;
         flex-wrap: wrap;
         position: relative;
-        z-index: 2010;
+        z-index: 2100;
     }
     .custom-filter.btn {
         background-color: var(--fondo-tarjeta);
@@ -370,18 +370,21 @@
         z-index: 2050;
         display: none;
         opacity: 0;
-        transition: opacity 0.3 ease;
+        transition: opacity 0.3s ease;
     }
     .blur-overlay.show {display: block; opacity: 1;}
     .bottom-sheet-menu {
-        position: absolute; top: 0; left: 0; right: 0;
+        position: absolute;
+        top:calc(100% + 8px);
+        left: 0;
+        right: 0;
         background-color: var(--fondo-tarjeta);
         border-radius: 20px;
         padding: 20px 20px 24px;
         z-index: 2100;
         opacity: 0;
         pointer-events: none;
-        transform: translateY(20px);
+        transform: translateY(-10px);
         transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         display: flex; flex-direction: column;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -391,7 +394,7 @@
     .bs-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--texto-principal); }
     .bs-btn-clear { background: none; border: none; color: var(--amarillo-vial); font-size: 15px; font-weight: 600; cursor: pointer; }
     
-    .bs-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; max-height: 40vh; overflow-y: auto;}
+    .bs-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; max-height: 180px; overflow-y: auto;}
     .bs-option { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer; border-bottom: 1px solid rgba(150,150,150,0.08); }
     .bs-option:last-child { border-bottom: none; }
     .bs-text { font-size: 15px; font-weight: 600; color: var(--texto-principal); }
@@ -487,7 +490,77 @@
                 <span>Estado</span>
                 <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
             </button>
+            <!-- Menu "tipo" -->
+            <div id="bottom-sheet-type" class="bottom-sheet-menu">
+                <div class="bs-header">
+                    <h3>Tipo de reporte</h3>
+                    <button class="bs-btn-clear" onclick="clearFilter('type')">Limpiar</button>
+            </div>
+            <div class="bs-options">
+                <label class="bs-option">
+                    <span class="bs-text">Bache</span>
+                    <input type="checkbox" name="radio-type" value="Bache o calzada rota" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">Vereda dañada</span>
+                    <input type="checkbox" name="radio-type" value="Vereda dañada" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">Semáforo</span>
+                    <input type="checkbox" name="radio-type" value="Semáforo o señalética" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">Poste</span>
+                    <input type="checkbox" name="radio-type" value="Cable o poste" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">Árbol con riesgo de caída</span>
+                    <input type="checkbox" name="radio-type" value="Árbol con riesgo de caída" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">Otro</span>
+                    <input type="checkbox" name="radio-type" value="Otro" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+            </div>
+            <div class="bs-footer">
+                <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
+            </div>
         </div>
+    
+        <!--Menu estado-->
+        <div id="bottom-sheet-status" class="bottom-sheet-menu">
+            <div class="bs-header">
+                <h3>Estado del reporte</h3>
+                <button class="bs-btn-clear" onclick="clearFilter('status')">Limpiar</button>
+            </div>
+            <div class="bs-options">
+                <label class="bs-option">
+                    <span class="bs-text">Recibido</span>
+                    <input type="checkbox" name="radio-status" value="Recibido" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>  
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">En revisión</span>
+                    <input type="checkbox" name="radio-status" value="En revisión" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">Atendido</span>
+                    <input type="checkbox" name="radio-status" value="Atendido" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+            </div>
+            <div class="bs-footer">
+                <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
+            </div>
+        </div>
+    </div>
 
 <!-- Contenedor dinámico de la lista -->
         <div style="position: relative; flex: 1; display: flex; flex-direction:column; min-height: 0; margin: 0 -20px; padding: 0 20px;">
@@ -509,76 +582,7 @@
 
     <div id="filters-overlay" class="blur-overlay" onclick="closeMenus()"></div>
     
-    <!-- Menu "tipo" -->
-    <div id="bottom-sheet-type" class="bottom-sheet-menu">
-        <div class="bs-header">
-            <h3>Tipo de reporte</h3>
-            <button class="bs-btn-clear" onclick="clearFilter('type')">Limpiar</button>
-        </div>
-        <div class="bs-options">
-            <label class="bs-option">
-                <span class="bs-text">Bache</span>
-                <input type="radio" name="radio-type" value="bache o calzada rota" class="hidden-radio" onclick="selectOption(this, 'type')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-            <label class="bs-option">
-                <span class="bs-text">Vereda dañada</span>
-                <input type="radio" name="radio-type" value="Vereda dañada" class="hidden-radio" onclick="selectOption(this, 'type')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-            <label class="bs-option">
-                <span class="bs-text">Semáforo</span>
-                <input type="radio" name="radio-type" value="Semáforo o señalética" class="hidden-radio" onclick="selectOption(this, 'type')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-            <label class="bs-option">
-                <span class="bs-text">Poste</span>
-                <input type="radio" name="radio-type" value="Cable o poste" class="hidden-radio" onclick="selectOption(this, 'type')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-            <label class="bs-option">
-                <span class="bs-text">Árbol con riesgo de caída</span>
-                <input type="radio" name="radio-type" value="Árbol con riesgo de caída" class="hidden-radio" onclick="selectOption(this, 'type')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-            <label class="bs-option">
-                <span class="bs-text">Otro</span>
-                <input type="radio" name="radio-type" value="Otro" class="hidden-radio" onclick="selectOption(this, 'type')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-        </div>
-        <div class="bs-footer">
-            <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
-        </div>
-    </div>
     
-    <!--Menu estado-->
-    <div id="bottom-sheet-status" class="bottom-sheet-menu">
-        <div class="bs-header">
-            <h3>Estado del reporte</h3>
-            <button class="bs-btn-clear" onclick="clearFilter('status')">Limpiar</button>
-        </div>
-        <div class="bs-options">
-            <label class="bs-option">
-                <span class="bs-text">Recibido</span>
-                <input type="radio" name="radio-status" value="Recibido" class="hidden-radio" onclick="selectOption(this, 'status')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>  
-            </label>
-            <label class="bs-option">
-                <span class="bs-text">En revisión</span>
-                <input type="radio" name="radio-status" value="En revisión" class="hidden-radio" onclick="selectOption(this, 'status')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-            <label class="bs-option">
-                <span class="bs-text">Atendido</span>
-                <input type="radio" name="radio-status" value="Atendido" class="hidden-radio" onclick="selectOption(this, 'status')">
-                <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
-            </label>
-        </div>
-        <div class="bs-footer">
-            <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
-        </div>
-    </div>
 
 </div> 
 
@@ -635,14 +639,14 @@
 
 <!--  SCRIPT PARA LOS MENÚS DE FILTROS -->
 <script>
-    let currentTypeFilter = 'Todos';
-    let currentStatusFilter = 'Todos';
+    let currentTypeFilter = [];
+    let currentStatusFilter = [];
     function openMenu(menuType) {
         const menu = document.getElementById(`bottom-sheet-${menuType}`);
         const isOpen = menu.classList.contains('show');
         closeMenus(); 
     
-        if (!isOpen) { // Si no estaba abierto, lo abrimos
+        if (!isOpen) { 
         document.getElementById(`btn-filter-${menuType}`).classList.add('activate');
         menu.classList.add('show');
         document.getElementById('filters-overlay').classList.add('show');
@@ -653,25 +657,29 @@
         document.querySelectorAll('.bottom-sheet-menu').forEach(menu => menu.classList.remove('show'));
         document.getElementById('filters-overlay').classList.remove('show');
     }
-    function selectOption(inputElement, menuType) {
-        const optionText = inputElement.parentElement.querySelector('.bs-text').innerText;
-        const shortText = optionText.split(' ')[0]; 
-        document.querySelector(`#btn-filter-${menuType} span`).innerText = `${menuType === 'type' ? 'Tipo' : 'Estado'} · ${shortText}`;
-    }
+    
     function clearFilter(menuType) {
-        const radioInputs = document.querySelectorAll(`input[name="radio-${menuType}"]`);
-        radioInputs.forEach(radio => radio.checked = false);
+        const checkboxes = document.querySelectorAll(`input[name="radio-${menuType}"]`);
+        checkboxes.forEach(radio => radio.checked = false);
         document.querySelector(`#btn-filter-${menuType} span`).innerText = menuType === 'type' ? 'Tipo' : 'Estado';
-        if (menuType === 'type') currentTypeFilter = 'Todos';
-        if (menuType === 'status') currentStatusFilter = 'Todos';
+        if (menuType === 'type') currentTypeFilter = [];
+        if (menuType === 'status') currentStatusFilter = [];
         closeMenus();
         loadNearbyReports(currentLat, currentLon, currentRadius);
     }
     function applyFilters() {
-        const selectedType = document.querySelector('input[name="radio-type"]:checked');
-        const selectedStatus = document.querySelector('input[name="radio-status"]:checked');
-        currentTypeFilter = selectedType ? selectedType.value : 'Todos';
-        currentStatusFilter = selectedStatus ? selectedStatus.value : 'Todos';
+        const selectedType = Array.from(document.querySelectorAll('input[name="radio-type"]:checked'));
+        const selectedStatus = Array.from(document.querySelectorAll('input[name="radio-status"]:checked'));
+        currentTypeFilter = selectedType.map(cb => cb.value);
+        currentStatusFilter = selectedStatus.map(cb => cb.value)
+        const btnType = document.querySelector('#btn-filter-type span');
+        if (selectedType.length === 0) btnType.innerText = 'Tipo';
+        else if (selectedType.length ===1) btnType.innerText ='Tipo · ' + selectedType[0].parentElement.querySelector('.bs-text').innerText.split(' ')[0];
+        else btnType.innerText = 'Tipo · ' + selectedType.length;
+        const btnStatus = document.querySelector('#btn-filter-status span');
+        if (selectedStatus.length === 0) btnStatus.innerText = 'Estado';
+        else if (selectedStatus.length === 1) btnStatus.innerText = 'Estado · ' + selectedStatus[0].parentElement.querySelector('.bs-text').innerText.split(' ')[0];
+        else btnStatus.innerText = 'Estado · ' + selectedStatus.length;
         closeMenus();
         loadNearbyReports(currentLat, currentLon, currentRadius); // Recarga los marcadores del mapa
     }
@@ -706,9 +714,9 @@
             radius: 7
         }).addTo(mapa);
         var markerLayer = L.layerGroup().addTo(mapa);
-        var currentLat = -33.449034;
-        var currentLon = -70.672983;
-        var currentRadius = 500;
+                window.currentLat = -33.449034;
+                window.currentLon = -70.672983;
+                window.currentRadius = 500;
 
         // --- PINES DINÁMICOS ---
         const COLOR_ESTADO = {
@@ -868,7 +876,7 @@
             'default': `<svg viewBox="0 0 24 24" style="width: 62%; height: 62%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;"><path d="M12 2l9.5 17h-19z" stroke-linejoin="round"/><path d="M12 9v4"/><circle cx="12" cy="16.5" r="1.2" fill="currentColor" stroke="none"/></svg>`
         };
 
-        function loadNearbyReports(centerLat, centerLon, radiusMeters){
+            window.loadNearbyReports= function(centerLat, centerLon, radiusMeters){
                 const reportsData = document.getElementById('datos-reportes');
                 if (!reportsData) return;
                 const pointsArray = JSON.parse(reportsData.textContent);
@@ -891,10 +899,10 @@
                         let estadoRaw = p.estado ? p.estado.toLowerCase() : 'en_revision';
                         let statusText = ESTADOS_TEXTO[estadoRaw] || p.estado || "En revisión";
                         let typeText = p.categoria || "Desconocido"; 
-                        if (statusFilter !== 'Todos' && statusFilter !== 'Todos los estados' && statusText !== statusFilter) {
+                        if (statusFilter.length > 0 && !statusFilter.includes(statusText)) {
                             return;
                         }
-                        if (typeFilter !== 'Todos' && typeFilter !== 'Todos los tipos' && typeText !== typeFilter) {
+                        if (typeFilter.length > 0  && !typeFilter.includes(typeText)) {
                             return;
                         }
 
@@ -962,8 +970,8 @@
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    currentLat = position.coords.latitude;
-                    currentLon = position.coords.longitude;
+                    window.currentLat = position.coords.latitude;
+                    window.currentLon = position.coords.longitude;
                     blueDot.setLatLng([currentLat, currentLon]);
                     const searchRadius = 500;
                     let circleArea = L.circle([currentLat, currentLon],{
