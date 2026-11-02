@@ -43,9 +43,31 @@ class Reporte(models.Model):
 
 
 class Confirmacion(models.Model):
+    """Alguien dice que el reporte de otro es real: a mi tambien me pasa.
+
+    No se le pone related_name a proposito: el panel municipal ya cuenta las
+    confirmaciones con reporte.confirmacion_set, que es el nombre que Django da
+    por defecto.
+    """
+
     reporte = models.ForeignKey(Reporte, on_delete=models.CASCADE)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     fecha_confirmacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Cada persona confirma un reporte una sola vez. Sin esto, apretar dos
+        # veces el boton deja dos filas y el panel municipal ve un desperfecto
+        # mas grave de lo que es: el contador de confirmaciones es justamente
+        # lo que usa para priorizar.
+        constraints = [
+            models.UniqueConstraint(
+                fields=["reporte", "usuario"],
+                name="una_confirmacion_por_persona",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.usuario} confirma #{self.reporte_id}"
 
 
 class CambioEstado(models.Model):
