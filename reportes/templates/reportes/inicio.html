@@ -268,8 +268,8 @@
     
     .rbtn { transition: all 0.2s ease; }
     .rbtn.on { background-color: var(--amarillo-vial) !important; color: #1b2430 !important; }
-    .report-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-    .group { background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(27,36,48,.04); }
+    .report-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; padding-bottom: 15px; -webkit-overflow-scrolling: touch; }
+    .group { flex-shrink: 0; background: var(--fondo-tarjeta); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 rgba(27,36,48,.04); }
     .rep { display: flex; align-items: center; gap: 12px; padding: 11px 12px; position: relative; cursor: pointer; }
     .rep + .rep::before { content: ""; position: absolute; top: 0; left: 80px; right: 0; height: 0.5px; background: var(--texto-secundario); opacity: 0.2; }
     .thumb { width: 52px; height: 52px; border-radius: 12px; overflow: hidden; flex: none; background: #3a3d42; }
@@ -967,6 +967,7 @@
         }
         
         // Solicitar Ubi
+        //Comentar para hacer pruebas
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function(position) {
@@ -998,14 +999,13 @@
             loadNearbyReports(currentLat, currentLon, currentRadius);
         }
         
-
-
-        /*
         // Ubi para pruebas
-        const latPrueba = -33.449034; // Reemplaza con la latitud que quieras probar
-        const lonPrueba = -70.672983; // Reemplaza con la longitud que quieras probar
+        //Descomentar para hacer pruebas
+        /*
+        const latPrueba = -33.453840; // Reemplaza con la latitud que quieras probar
+        const lonPrueba = -70.677135; // Reemplaza con la longitud que quieras probar
         const searchRadius = 500;
-
+        
         blueDot.setLatLng([latPrueba, lonPrueba]);
         let circleArea = L.circle([latPrueba, lonPrueba], {
             color: '#3478f6',
@@ -1016,7 +1016,7 @@
         }).addTo(mapa);
         mapa.setView([latPrueba, lonPrueba], 17);
         loadNearbyReports(latPrueba, lonPrueba, searchRadius);
-         */
+        */
 
         setTimeout(function() { mapa.invalidateSize(); }, 100);
         setTimeout(function() { mapa.invalidateSize(); }, 100);
