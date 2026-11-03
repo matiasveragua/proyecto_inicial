@@ -1,5 +1,5 @@
 from datetime import timedelta
-
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -7,7 +7,7 @@ from django.contrib.auth.views import LoginView
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-
+from django.urls import reverse_lazy
 from .cercania import RADIO_METROS, reportes_cercanos
 from .forms import RegistroForm, ReporteForm, UbicacionForm
 from .models import Confirmacion, Reporte
@@ -22,7 +22,11 @@ class EntrarView(LoginView):
     #Iniciar sesion
 
     template_name = "reportes/login.html"
-    redirect_authenticated_user = True
+    def get_success_url(self):
+        if self.request.user.is_superuser:
+            return reverse_lazy('panel_municipal')
+        
+        return reverse_lazy('inicio')
 
 
 def inicio(request):
@@ -231,6 +235,7 @@ def mis_reportes(request):
 def mas_detalle(request):
     return render(request, 'reportes/mas_detalle.html')
 
+@user_passes_test(lambda u: u.is_authenticated and u.is_superuser, login_url='login')
 def panel_municipal(request):
     reportes_obtenidos = Reporte.objects.all()
     ahora = timezone.now()
