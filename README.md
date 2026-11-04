@@ -10,7 +10,7 @@ Desde la carpeta del proyecto, la primera vez:
 ```
 python -m venv venv
 venv\Scripts\activate
-pip install django pillow
+pip install django pillow django-axes
 python manage.py migrate
 python manage.py runserver
 ```

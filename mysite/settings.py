@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'reportes',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -151,4 +153,27 @@ DEFAULT_FROM_EMAIL = 'avisos@gevi.cl'
 # A donde se va el usuario despues de iniciar o cerrar sesion.
 # Al inicio y no derecho a reportar: el reporte parte en /ubicacion/.
 LOGIN_REDIRECT_URL = '/'
+
+# Proteccion contra spam de login (riesgo R1 de la matriz de riesgos).
+# Axes se pone como primer backend: decide ANTES de comprobar la clave, asi
+# un ataque por fuerza bruta se corta sin gastar el hash PBKDF2, que es caro.
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_FAILURE_LIMIT = 5              # intentos fallidos antes de bloquear
+AXES_COOLOFF_TIME = 0.25           # duracion del bloqueo, en horas (15 min)
+AXES_LOCKOUT_PARAMETERS = ['ip_address']
+AXES_RESET_ON_SUCCESS = True
+
+# El conteo de intentos vive en cache, no en SQLite: asi el propio mecanismo
+# de defensa no satura la base con escrituras concurrentes bajo un ataque.
+AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'axes',
+    }
+}
 LOGOUT_REDIRECT_URL = '/'
