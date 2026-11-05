@@ -8,7 +8,10 @@ from .cercania import (
     distancia_metros,
     reportes_cercanos,
 )
-from .models import CambioEstado, Categoria, Confirmacion, Reporte, Ubicacion
+from django.core import mail
+
+from .models import (CambioEstado, Categoria, Confirmacion, Perfil,
+                     Reporte, Ubicacion)
 from .views import UBICACION_EN_CURSO
 
 
@@ -459,3 +462,179 @@ class CandadoDeConfirmacionTest(AyudaParaReportes):
 
         with self.assertRaises(IntegrityError):
             Confirmacion.objects.create(reporte=reporte, usuario=usuario)
+
+
+class PanelMunicipalTest(AyudaParaReportes):
+    """El panel es la pantalla del municipio: ni se entra sin rol ni se
+    cambia un estado sin dejar rastro."""
+
+    def setUp(self):
+        self.vecina = self.crear_usuario("vecina@correo.cl")
+        self.gestor = self.crear_usuario("gestor@municipio.cl")
+        Perfil.objects.create(usuario=self.gestor, es_gestor=True, comuna="Ñuñoa")
+        self.reporte = self.crear_reporte(self.vecina)
+
+    def entrar_como(self, usuario):
+        self.client.force_login(usuario)
+
+    def test_sin_sesion_el_panel_manda_al_login(self):
+        respuesta = self.client.get(reverse("panel_municipal"))
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertIn("/accounts/login/", respuesta.headers["Location"])
+
+    def test_un_vecino_no_entra_al_panel(self):
+        self.entrar_como(self.vecina)
+        self.assertEqual(self.client.get(reverse("panel_municipal")).status_code, 403)
+
+    def test_el_gestor_entra(self):
+        self.entrar_como(self.gestor)
+        self.assertEqual(self.client.get(reverse("panel_municipal")).status_code, 200)
+
+    def test_el_gestor_solo_ve_los_reportes_de_su_comuna(self):
+        ajeno = self.crear_reporte(self.vecina)
+        ajeno.ubicacion.comuna = "Puente Alto"
+        ajeno.ubicacion.save()
+
+        self.entrar_como(self.gestor)
+        reportes = self.client.get(reverse("panel_municipal")).context["reportes"]
+
+        self.assertIn(self.reporte, reportes)
+        self.assertNotIn(ajeno, reportes)
+
+    def test_los_totales_son_los_de_su_comuna(self):
+        otro = self.crear_reporte(self.vecina, estado="atendido")
+        otro.ubicacion.comuna = "Puente Alto"
+        otro.ubicacion.save()
+
+        self.entrar_como(self.gestor)
+        contexto = self.client.get(reverse("panel_municipal")).context
+
+        self.assertEqual(contexto["total_recibidos"], 1)
+        self.assertEqual(contexto["total_atendidos"], 0)
+
+    def test_un_vecino_no_puede_cambiar_un_estado(self):
+        self.entrar_como(self.vecina)
+        respuesta = self.client.post(
+            reverse("actualizar_estado"),
+            {"reporte_id": self.reporte.id, "estado_rep": "atendido"},
+        )
+        self.assertEqual(respuesta.status_code, 403)
+        self.reporte.refresh_from_db()
+        self.assertEqual(self.reporte.estado_actual, "recibido")
+
+    def test_el_gestor_no_toca_reportes_de_otra_comuna(self):
+        self.reporte.ubicacion.comuna = "Puente Alto"
+        self.reporte.ubicacion.save()
+
+        self.entrar_como(self.gestor)
+        respuesta = self.client.post(
+            reverse("actualizar_estado"),
+            {"reporte_id": self.reporte.id, "estado_rep": "atendido"},
+        )
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_el_cambio_de_estado_queda_en_el_historial(self):
+        """El panel movia estado_actual sin escribir CambioEstado, asi que la
+        pantalla de seguimiento mostraba un estado que nadie podia explicar."""
+        self.entrar_como(self.gestor)
+        self.client.post(
+            reverse("actualizar_estado"),
+            {
+                "reporte_id": self.reporte.id,
+                "estado_rep": "en_revision",
+                "comentario": "Lo vamos a ir a ver el martes.",
+            },
+        )
+
+        self.reporte.refresh_from_db()
+        self.assertEqual(self.reporte.estado_actual, "en_revision")
+
+        cambio = CambioEstado.objects.get(reporte=self.reporte)
+        self.assertEqual(cambio.estado_anterior, "recibido")
+        self.assertEqual(cambio.estado_nuevo, "en_revision")
+        self.assertEqual(cambio.comentario, "Lo vamos a ir a ver el martes.")
+        self.assertEqual(cambio.gestor, self.gestor)
+
+    def test_el_comentario_no_se_pierde(self):
+        self.entrar_como(self.gestor)
+        self.client.post(
+            reverse("actualizar_estado"),
+            {
+                "reporte_id": self.reporte.id,
+                "estado_rep": "atendido",
+                "comentario": "Cuadrilla reparó el hoyo.",
+            },
+        )
+        respuesta = self.client.get(reverse("detalle", args=[self.reporte.id]))
+        self.assertContains(respuesta, "Cuadrilla reparó el hoyo.")
+
+    def test_descartar_sin_explicar_no_cambia_nada(self):
+        self.entrar_como(self.gestor)
+        self.client.post(
+            reverse("actualizar_estado"),
+            {"reporte_id": self.reporte.id, "estado_rep": "descartado"},
+        )
+        self.reporte.refresh_from_db()
+        self.assertEqual(self.reporte.estado_actual, "recibido")
+        self.assertFalse(CambioEstado.objects.exists())
+
+    def test_un_estado_inventado_no_pasa(self):
+        self.entrar_como(self.gestor)
+        self.client.post(
+            reverse("actualizar_estado"),
+            {"reporte_id": self.reporte.id, "estado_rep": "arreglado_magicamente"},
+        )
+        self.reporte.refresh_from_db()
+        self.assertEqual(self.reporte.estado_actual, "recibido")
+
+    def test_guardar_el_mismo_estado_no_llena_el_historial(self):
+        self.entrar_como(self.gestor)
+        for _ in range(3):
+            self.client.post(
+                reverse("actualizar_estado"),
+                {"reporte_id": self.reporte.id, "estado_rep": "recibido"},
+            )
+        self.assertFalse(CambioEstado.objects.exists())
+
+    def test_el_aviso_llega_a_quien_reporto_y_a_quien_confirmo(self):
+        """El boton decia "Guardar y avisar" pero no se enviaba nada."""
+        vecino = self.crear_usuario("vecino@correo.cl")
+        Confirmacion.objects.create(reporte=self.reporte, usuario=vecino)
+
+        self.entrar_como(self.gestor)
+        mail.outbox = []
+        self.client.post(
+            reverse("actualizar_estado"),
+            {
+                "reporte_id": self.reporte.id,
+                "estado_rep": "atendido",
+                "comentario": "Listo.",
+            },
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        aviso = mail.outbox[0]
+        self.assertCountEqual(
+            aviso.to, ["vecina@correo.cl", "vecino@correo.cl"]
+        )
+        self.assertIn("Atendido", aviso.subject)
+        self.assertIn("Listo.", aviso.body)
+        # El cuerpo traia la secuencia escapada en vez del salto de linea.
+        self.assertNotIn(chr(92) + "n", aviso.body)
+        self.assertIn("\n\n", aviso.body)
+
+    def test_si_no_cambia_el_estado_no_se_avisa(self):
+        self.entrar_como(self.gestor)
+        mail.outbox = []
+        self.client.post(
+            reverse("actualizar_estado"),
+            {"reporte_id": self.reporte.id, "estado_rep": "recibido"},
+        )
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_la_pantalla_de_login_ya_no_lleva_la_clave_escrita(self):
+        """Estaba en el JavaScript de la pagina: se leia en el codigo fuente."""
+        respuesta = self.client.get(reverse("login"))
+        contenido = respuesta.content.decode("utf-8")
+        self.assertNotIn("verificarClave", contenido)
+        self.assertNotIn("Municipalidad", contenido)
