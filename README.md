@@ -1,4 +1,4 @@
-# Desperfectos RM
+# G.E.V.I
 
 Aplicación para reportar desperfectos en la vía pública. Proyecto del ramo
 IWG-400, equipo 13.
