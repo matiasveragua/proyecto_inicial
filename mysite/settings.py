@@ -26,6 +26,7 @@ SECRET_KEY = 'django-insecure-pl^(-=^mqjp-&+ru-$c3^spr88obydp%8bd=1)#we=x%!7%=%$
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
 CSRF_TRUSTED_ORIGINS = [
     "https://guy-licorice-economy.ngrok-free.dev"
 ]
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'reportes',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -130,24 +133,41 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 STATIC_URL = 'static/'
 
 # Archivos subidos por los usuarios (fotos de los reportes)
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# El aviso de cambio de estado se imprime en la consola del servidor.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'avisos@gevi.cl'
 
 # A donde se va el usuario despues de iniciar o cerrar sesion.
 # Al inicio y no derecho a reportar: el reporte parte en /ubicacion/.
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
 
-#Configuracion para que se vean las fotos subidas
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Proteccion contra spam de login (riesgo R1 de la matriz de riesgos).
+# Axes se pone como primer backend: decide ANTES de comprobar la clave, asi
+# un ataque por fuerza bruta se corta sin gastar el hash PBKDF2, que es caro.
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_FAILURE_LIMIT = 5              # intentos fallidos antes de bloquear
+AXES_COOLOFF_TIME = 0.25           # duracion del bloqueo, en horas (15 min)
+AXES_LOCKOUT_PARAMETERS = ['ip_address']
+AXES_RESET_ON_SUCCESS = True
+
+# El conteo de intentos vive en cache, no en SQLite: asi el propio mecanismo
+# de defensa no satura la base con escrituras concurrentes bajo un ataque.
+AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'axes',
+    }
+}
+LOGOUT_REDIRECT_URL = '/'
