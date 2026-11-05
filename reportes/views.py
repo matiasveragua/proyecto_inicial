@@ -14,6 +14,7 @@ from django.urls import reverse_lazy
 from .cercania import RADIO_METROS, reportes_cercanos
 from .forms import RegistroForm, ReporteForm, UbicacionForm
 from .models import CambioEstado, Confirmacion, Perfil, Reporte
+from functools import wraps
 
 UBICACION_EN_CURSO = "ubicacion_en_curso"
 
@@ -31,8 +32,23 @@ class EntrarView(LoginView):
         
         return reverse_lazy('inicio')
 
+def requiere_ubicacion(view_func):
+    """Decorador que bloquea el acceso si el usuario no ha marcado la ubicacion en el mapa primero."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+
+        if not request.session.get(UBICACION_EN_CURSO):
+            messages.error(request, "Debes iniciar el proceso desde el mapa principal.")
+            return redirect('inicio')
+
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 def inicio(request):
+
+    if UBICACION_EN_CURSO in request.session:
+        del request.session[UBICACION_EN_CURSO]
+        
     hace_una_semana = timezone.now() - timedelta(days=7)
 
     # Los reportes que se dibujan como pines en el mapa.
@@ -173,6 +189,7 @@ def cercanos(request):
 
 
 @login_required
+@requiere_ubicacion
 def reportar(request):
     datos_ubicacion = request.session.get(UBICACION_EN_CURSO)
     if not datos_ubicacion:
