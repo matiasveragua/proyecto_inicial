@@ -123,21 +123,21 @@
                 <label class="k" for="id_direccion_texto">Dirección o referencia</label>
 
                 {% comment %}
-                   El name es "direccion_texto" porque asi se llama el campo en
-                   el modelo Ubicacion; de esa forma el formulario de Django lo
-                   toma solo, sin tener que copiarlo a mano en la vista.
+                    El name es "direccion_texto" porque asi se llama el campo en
+                    el modelo Ubicacion; de esa forma el formulario de Django lo
+                    toma solo, sin tener que copiarlo a mano en la vista.
                 {% endcomment %}
 
                 <input class="v" type="text" name="direccion_texto" id="id_direccion_texto"
-                       value="{{ form.direccion_texto.value|default:'' }}"
-                       placeholder="Ej: Av. Vicuña Mackenna 3900" required
-                       style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; color: inherit;">
+                        value="{{ form.direccion_texto.value|default:'' }}"
+                        placeholder="Ej: Av. Vicuña Mackenna 3900" required
+                        style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; color: inherit;">
 
             </div>
 
             {% comment %}
-               La comuna es obligatoria en el modelo, por eso va aca y no en
-               el paso siguiente.
+                La comuna es obligatoria en el modelo, por eso va aca y no en
+                el paso siguiente.
             {% endcomment %}
 
             <div class="row">
@@ -145,9 +145,9 @@
                 <label class="k" for="id_comuna">Comuna</label>
 
                 <input class="v" type="text" name="comuna" id="id_comuna"
-                       value="{{ form.comuna.value|default:'' }}"
-                       placeholder="Ej: Ñuñoa" required
-                       style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; color: inherit;">
+                        value="{{ form.comuna.value|default:'' }}"
+                        placeholder="Ej: Ñuñoa" required
+                        style="border:none; outline:none; background:transparent; width:100%; font-family: inherit; color: inherit;">
 
             </div>
         </div>

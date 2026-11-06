@@ -24,6 +24,23 @@ class EntrarView(LoginView):
     template_name = "reportes/login.html"
     redirect_authenticated_user = True
 
+def calculate_severity(report_type, confirmations):
+    base_score = 0
+    high_risk_types = ['Árbol con riesgo de caída', 'Cable o poste']
+    
+    if report_type in high_risk_types:
+        base_score = 5 
+        
+    total_score = base_score + confirmations
+    
+    if total_score < 5:
+        return 'Baja'
+    elif total_score < 15:
+        return 'Media'
+    else:
+        return 'Alta'
+
+
 
 def inicio(request):
     hace_una_semana = timezone.now() - timedelta(days=7)
@@ -37,12 +54,14 @@ def inicio(request):
 
     puntos = [
         {
+            "id": r.id,
             "lat": r.ubicacion.latitud,
             "lon": r.ubicacion.longitud,
             "categoria": str(r.categoria),
             "comuna": r.ubicacion.comuna,
             "estado": r.estado_actual,
             "etiqueta": r.get_estado_actual_display(),
+            "gravedad": calculate_severity(str(r.categoria), r.confirmacion_set.count()) 
         }
         for r in reportes
     ]
