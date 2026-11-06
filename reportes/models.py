@@ -77,3 +77,16 @@ class CambioEstado(models.Model):
     estado_nuevo = models.CharField(max_length=20)
     comentario = models.TextField(blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
+
+
+class Perfil(models.Model):
+    """Rol del usuario. Sin esto el panel municipal no puede distinguir
+    a un gestor de un vecino."""
+
+    usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    es_gestor = models.BooleanField(default=False)
+    comuna = models.CharField(max_length=60, blank=True)
+
+    def __str__(self):
+        rol = "gestor" if self.es_gestor else "vecino"
+        return f"{self.usuario} ({rol})"

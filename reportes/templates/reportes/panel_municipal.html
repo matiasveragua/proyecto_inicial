@@ -111,8 +111,9 @@
     <!-- Cabecera -->
     <div class="dh">
         <div>
-            <h2>Puntos críticos</h2>
-            <span class="sub">Agrupados por ubicación y categoría</span>
+            <h2>Puntos críticos</h2> 
+            <span class="sub">Agrupados por ubicación y categoría </span>
+            <a href="{% url 'login' %}" style="color: var(--rojo-alerta); text-decoration: none; font-size: 9px; font-weight: bold; border: 1px solid var(--rojo-alerta); padding: 4px 8px; border-radius: 8px;"> Cerrar sesión </a>
         </div>
         <div class="seg">
             <span class="on" id="btn-vista-tabla">Tabla</span>
@@ -300,7 +301,7 @@
             </div>
 
             <div class="s-title">Comentario para los ciudadanos (obligatorio al descartar)</div>
-            <textarea name="comentario" placeholder="Ej: Cuadrilla reparó el bache el 9 de octubre."></textarea>
+            <textarea name="comentario" maxlength="1000" placeholder="Ej: Cuadrilla reparó el bache el 9 de octubre."></textarea>
 
             <button type="submit" class="btn-save" id="det-btn-guardar">Guardar y avisar</button>
         </form>
