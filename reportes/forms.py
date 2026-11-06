@@ -108,7 +108,7 @@ class ReporteForm(forms.ModelForm):
         }
         widgets = {
             "descripcion": forms.Textarea(
-                attrs={"rows": 4, "placeholder": "Cuenta brevemente qué pasa"}
+                attrs={"rows": 4, "placeholder": "Cuenta brevemente qué pasa", 'maxlength': '500'}
             ),
         }
 

@@ -1,16 +1,20 @@
 from datetime import timedelta
-
+from django.contrib.auth.decorators import user_passes_test
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-
+from django.urls import reverse_lazy
 from .cercania import RADIO_METROS, reportes_cercanos
 from .forms import RegistroForm, ReporteForm, UbicacionForm
-from .models import Confirmacion, Reporte
+from .models import CambioEstado, Confirmacion, Perfil, Reporte
+from functools import wraps
 
 UBICACION_EN_CURSO = "ubicacion_en_curso"
 
@@ -22,7 +26,11 @@ class EntrarView(LoginView):
     #Iniciar sesion
 
     template_name = "reportes/login.html"
-    redirect_authenticated_user = True
+    def get_success_url(self):
+        if self.request.user.is_superuser:
+            return reverse_lazy('panel_municipal')
+        
+        return reverse_lazy('inicio')
 
 def calculate_severity(report_type, confirmations):
     base_score = 0
@@ -41,8 +49,23 @@ def calculate_severity(report_type, confirmations):
         return 'Alta'
 
 
+def requiere_ubicacion(view_func):
+    """Decorador que bloquea el acceso si el usuario no ha marcado la ubicacion en el mapa primero."""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+
+        if not request.session.get(UBICACION_EN_CURSO):
+            messages.error(request, "Debes iniciar el proceso desde el mapa principal.")
+            return redirect('inicio')
+
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 def inicio(request):
+
+    if UBICACION_EN_CURSO in request.session:
+        del request.session[UBICACION_EN_CURSO]
+        
     hace_una_semana = timezone.now() - timedelta(days=7)
 
     # Los reportes que se dibujan como pines en el mapa.
@@ -185,6 +208,7 @@ def cercanos(request):
 
 
 @login_required
+@requiere_ubicacion
 def reportar(request):
     datos_ubicacion = request.session.get(UBICACION_EN_CURSO)
     if not datos_ubicacion:
@@ -246,42 +270,111 @@ def mis_reportes(request):
 
     return render(request, 'reportes/mis_reportes.html', {"reportes": reportes})
 
+
 @login_required
 def mas_detalle(request):
     return render(request, 'reportes/mas_detalle.html')
 
-def panel_municipal(request):
-    reportes_obtenidos = Reporte.objects.all()
-    ahora = timezone.now()
 
-    for reporte in reportes_obtenidos:
+def perfil_de(usuario):
+    return Perfil.objects.filter(usuario=usuario).first()
+
+
+def destinatarios_de(reporte):
+    """A quien le importa este reporte: quien lo creo y quienes lo confirmaron."""
+    correos = {reporte.creador.email or reporte.creador.username}
+    for confirmacion in reporte.confirmacion_set.select_related("usuario"):
+        usuario = confirmacion.usuario
+        correos.add(usuario.email or usuario.username)
+    return sorted(correo for correo in correos if "@" in correo)
+
+
+def avisar_del_cambio(reporte, nuevo_estado, comentario):
+    correos = destinatarios_de(reporte)
+    if not correos:
+        return 0
+
+    etiqueta = dict(Reporte.ESTADOS).get(nuevo_estado, nuevo_estado)
+    lineas = [
+        f"El reporte de {reporte.categoria} en {reporte.ubicacion} "
+        f"pasó a {etiqueta}.",
+    ]
+    if comentario:
+        lineas.append(f"Comentario del municipio: {comentario}")
+    lineas.append(f"Puedes ver el seguimiento en /reporte/{reporte.id}/")
+
+    # fail_silently: que un problema con el correo no deje el estado sin cambiar.
+    send_mail(
+        subject=f"Tu reporte #{reporte.id} pasó a {etiqueta}",
+        message="\n\n".join(lineas),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=correos,
+        fail_silently=True,
+    )
+    return len(correos)
+
+@user_passes_test(lambda u: u.is_authenticated and u.is_superuser, login_url='login')
+def panel_municipal(request):
+    reportes = Reporte.objects.select_related("categoria", "ubicacion").order_by("-fecha_creacion")
+    ahora = timezone.now()
+    for reporte in reportes:
         diferencia = ahora - reporte.fecha_creacion
         reporte.dias_antiguedad = diferencia.days
-
     cantidad_recibidos = Reporte.objects.filter(estado_actual="recibido").count()
     cantidad_revision = Reporte.objects.filter(estado_actual="en_revision").count()
     cantidad_atendidos = Reporte.objects.filter(estado_actual="atendido").count()
     
     contexto = {
-        'reportes': reportes_obtenidos,
+        'reportes': reportes,
         'total_recibidos': cantidad_recibidos,
         'total_revision': cantidad_revision, 
         'total_atendidos': cantidad_atendidos
     }
     return render(request, 'reportes/panel_municipal.html', contexto)
 
+
+@user_passes_test(lambda u: u.is_authenticated and u.is_superuser, login_url='login')
 def actualizar_estado(request):
-    if request.method == 'POST':
-        reporte_id = request.POST.get('reporte_id')
-        nuevo_estado = request.POST.get('estado_rep')
-        comentario = request.POST.get('comentario', '')
-        
-        if reporte_id and nuevo_estado:
-            reporte = Reporte.objects.get(id=reporte_id)
-            reporte.estado_actual = nuevo_estado
-            reporte.save()
-            
+    if request.method != 'POST':
+        return redirect('panel_municipal')
+
+    reporte = get_object_or_404(
+        Reporte.objects.select_related("categoria", "ubicacion"),
+        pk=request.POST.get('reporte_id'),
+    )
+
+    nuevo_estado = request.POST.get('estado_rep')
+    if nuevo_estado not in dict(Reporte.ESTADOS):
+        messages.error(request, "Ese estado no existe.")
+        return redirect('panel_municipal')
+
+    comentario = (request.POST.get('comentario') or "").strip()
+    if nuevo_estado == "descartado" and not comentario:
+        messages.error(request, "Para descartar hay que explicar por qué.")
+        return redirect('panel_municipal')
+
+    estado_anterior = reporte.estado_actual
+    if nuevo_estado == estado_anterior:
+        return redirect('panel_municipal')
+
+    reporte.estado_actual = nuevo_estado
+    reporte.save(update_fields=["estado_actual"])
+    CambioEstado.objects.create(
+        reporte=reporte,
+        gestor=request.user,
+        estado_anterior=estado_anterior,
+        estado_nuevo=nuevo_estado,
+        comentario=comentario,
+    )
+
+    avisados = avisar_del_cambio(reporte, nuevo_estado, comentario)
+    messages.success(
+        request,
+        f"Reporte #{reporte.id} actualizado. Se avisó a {avisados} persona(s)."
+        if avisados else f"Reporte #{reporte.id} actualizado.",
+    )
     return redirect('panel_municipal')
+
 
 def terminos(request):
     return render(request, 'reportes/terminos.html')

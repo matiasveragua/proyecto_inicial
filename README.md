@@ -1,4 +1,4 @@
-# Desperfectos RM
+# G.E.V.I
 
 Aplicación para reportar desperfectos en la vía pública. Proyecto del ramo
 IWG-400, equipo 13.
@@ -10,7 +10,7 @@ Desde la carpeta del proyecto, la primera vez:
 ```
 python -m venv venv
 venv\Scripts\activate
-pip install django pillow
+pip install django pillow django-axes
 python manage.py migrate
 python manage.py runserver
 ```
@@ -60,13 +60,21 @@ python manage.py createsuperuser
 
 Las plantillas están todas en `reportes/templates/reportes/`.
 
+## Como crear un superusuario para acceder al panel municipal
 
-## Cómo limpiar la base de datos (Solución al error del mapa en Inicio)
+paso a paso:
 
-¿Por qué hacer esto?
-Durante las pruebas de la pantalla de ubicación, se guardaron reportes sin coordenadas GPS (campos de latitud y longitud vacíos). Cuando la pantalla de inicio (inicio.html) intenta dibujar esos puntos invisibles usando Leaflet, el mapa colapsa y deja de mostrar todos los pines.
+1. Ejecuta el siguiente comando: `python manage.py createsuperuser`
 
-Para que el mapa vuelva a funcionar, debemos eliminar esos reportes corruptos de la base de datos siguiendo estos pasos:
+2. Ingresa un nombre de usuario (ej: `muni`).
+
+3. El correo puedes dejarlo en blanco presionando `Enter`.
+
+4. Escribe una contraseña (no se verán los caracteres mientras escribes por seguridad).
+
+5. Ve a la pantalla de login de la aplicación, ingresa en el apartado de correo el nombre de usuario (ej: `muni`) y la contraseña creados anteriormente.
+
+## Cómo limpiar la base de datos (En caso de ser necesario)
 
 Paso a paso:
 
@@ -101,5 +109,3 @@ exit()
 ```
 python manage.py runserver
 ```
-
-> **Nota:** *Ya se agregó un seguro en el código de ubicacion.html para forzar que el formulario siempre capture las coordenadas exactas.*
