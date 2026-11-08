@@ -71,6 +71,8 @@ def inicio(request):
     # Los reportes que se dibujan como pines en el mapa.
     reportes = (
         Reporte.objects
+        .filter(~Q(estado_actual="descartado"))
+        .filter(~Q(estado_actual="atendido", fecha_creacion__lt=hace_una_semana))
         .select_related("categoria", "ubicacion")
         .order_by("-fecha_creacion")[:100]
     )
@@ -113,7 +115,7 @@ def registro(request):
             usuario = form.save()
             # Lo dejamos adentro al tiro, para que no tenga que escribir
             # la clave de nuevo justo despues de crearla.
-            login(request, usuario)
+            login(request, usuario, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, "Tu cuenta quedó creada.")
             return redirect("inicio")
     else:
@@ -156,6 +158,13 @@ def cercanos(request):
     encontrados = reportes_cercanos(
         datos_ubicacion["latitud"], datos_ubicacion["longitud"]
     )
+
+    hace_una_semana = timezone.now() - timedelta(days=7)
+    encontrados = [
+        (reporte, metros) for reporte, metros in encontrados 
+        if reporte.estado_actual != "descartado" 
+        and not (reporte.estado_actual == "atendido" and reporte.fecha_creacion < hace_una_semana)
+    ]
 
     if request.method == "POST":
         # Solo se puede confirmar algo que esta en esta misma pantalla. La
@@ -253,13 +262,13 @@ def reportar(request):
 @login_required
 def mis_reportes(request):
 
-    # distinct() porque un reporte propio que ademas confirmo calzaria con los
-    # dos lados del OR y saldria dos veces en la lista.
-    # select_related trae la categoria y la ubicacion en la misma consulta,
-    # para no pegarle a la base una vez por cada fila.
+    hace_una_semana = timezone.now() - timedelta(days=7)
+
     reportes = (
         Reporte.objects
         .filter(Q(creador=request.user) | Q(confirmacion__usuario=request.user))
+        .filter(~Q(estado_actual="descartado"))
+        .filter(~Q(estado_actual="atendido", fecha_creacion__lt=hace_una_semana))
         .select_related("categoria", "ubicacion")
         .distinct()
         .order_by("-fecha_creacion")
