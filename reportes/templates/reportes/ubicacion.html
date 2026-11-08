@@ -186,7 +186,6 @@
 
 <script>
     // Iniciar el mapa (centrado en Santiago por defecto)
-
     var mapa = L.map('mapa-ubicacion', {
         zoomControl: false 
     }).setView([-33.4489, -70.6693], 13);
@@ -196,22 +195,19 @@
         referrerPolicy: 'strict-origin-when-cross-origin'
     }).addTo(mapa);
 
-    // Crear el icono personalizado usando exactamente tu pin amarillo SVG
-
+    // Crear el icono personalizado
     var iconoPin = L.divIcon({
         html: `<svg viewBox="0 0 34 44" style="width: 34px; height: 44px; filter: drop-shadow(0 4px 4px rgba(0,0,0,.3)); overflow: visible;"><path d="M17 0C7.6 0 0 7.3 0 16.5 0 28 17 44 17 44s17-16 17-27.5C34 7.3 26.4 0 17 0z" fill="#ffc20e" stroke="#1b2430" stroke-width="2.5"/><path d="M12.5 11l4.5 7-3.6 3.6 6 7.4" stroke="#1b2430" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
         className: '',
         iconSize: [34, 44],
-        iconAnchor: [17, 44] // Hace que la punta de abajo sea la que marca el lugar exacto
+        iconAnchor: [17, 44] 
     });
 
-    // Poner el pin en el mapa y hacerlo ARRASTRABLE (Draggable)
     var marcador = L.marker([-33.4489, -70.6693], {
         icon: iconoPin,
         draggable: true
     }).addTo(mapa);
 
-    // Conectar con los campos con el HTML
     const btnUbicacion = document.getElementById('btnUbicacion');
     const campoLat = document.getElementById('lat');
     const campoLon = document.getElementById('lon');
@@ -219,7 +215,12 @@
     const campoComuna = document.getElementById('id_comuna');
     const pista = document.querySelector('.hint');
 
-    // Función de Geocodificación Inversa (Transforma Lat/Lon a Texto de Dirección)
+    let direccionVerificada = false;
+
+    // Si el usuario edita el texto a mano, quitamos la verificación hasta que la API confirme
+    campoDireccion.addEventListener('input', () => direccionVerificada = false);
+    campoComuna.addEventListener('input', () => direccionVerificada = false);
+
     function obtenerDireccionDeCoordenadas(lat, lon) {
         let urlReverse = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`;
         
@@ -227,44 +228,38 @@
             .then(res => res.json())
             .then(datos => {
                 if (datos && datos.address) {
-                    // Extraer calle (puede venir bajo diferentes nombres en OpenStreetMap)
                     let calle = datos.address.road || datos.address.pedestrian || datos.address.path || "";
                     let numero = datos.address.house_number ? " " + datos.address.house_number : "";
-                    
-                    // Extraer comuna
                     let comuna = datos.address.city || datos.address.town || datos.address.village || datos.address.suburb || datos.address.county || "";
 
-                    // Llenar el input de Dirección
                     if (calle !== "") {
                         campoDireccion.value = calle + numero;
                     } else if (datos.display_name) {
-                        // Respaldo por si no hay calle clara (ej. un parque grande)
                         campoDireccion.value = datos.display_name.split(',')[0]; 
                     }
                     
-                    // Llenar el input de Comuna
                     if (comuna !== "") {
                         campoComuna.value = comuna;
                     }
                     
                     pista.textContent = 'Puedes arrastrar el pin si quieres ser más exacto';
+                    pista.style.color = 'inherit';
+                    
+                    // Al usar el GPS o arrastrar el pin, la ubicación es 100% real
+                    direccionVerificada = true;
                 }
             })
             .catch(e => console.log("Error obteniendo la dirección de las coordenadas"));
     }
 
-    // Si el usuario arrastra el pin manualmente, actualizamos las coordenadas y el TEXTO
     marcador.on('dragend', function() {
         var posicion = marcador.getLatLng();
         campoLat.value = posicion.lat.toFixed(6);
         campoLon.value = posicion.lng.toFixed(6);
         pista.textContent = 'Ajustando dirección...';
-        
-        // Llamamos a la nueva función
         obtenerDireccionDeCoordenadas(posicion.lat, posicion.lng);
     });
 
-    // Botón de GPS: Mueve el mapa, el pin a tu ubicación física y actualiza el TEXTO
     btnUbicacion.addEventListener('click', function () {
         if (!navigator.geolocation) return;
         pista.textContent = 'Buscando tu ubicación...';
@@ -277,12 +272,10 @@
                 campoLat.value = lat.toFixed(6);
                 campoLon.value = lon.toFixed(6);
                 
-                mapa.setView([lat, lon], 16); // Hace zoom a tu calle
-                marcador.setLatLng([lat, lon]); // Mueve el pin
+                mapa.setView([lat, lon], 16); 
+                marcador.setLatLng([lat, lon]); 
                 
                 pista.textContent = 'Ubicación fijada. Detectando calle...';
-                
-                // Llamamos a la nueva función
                 obtenerDireccionDeCoordenadas(lat, lon);
                 btnUbicacion.disabled = false;
             },
@@ -294,16 +287,14 @@
         );
     });
 
-    // Geocodificación: Mueve el pin automáticamente al escribir la dirección
     function buscarDireccionEnMapa() {
         let dir = campoDireccion.value;
         let com = campoComuna.value;
         
-        // Solo busca si escribiste algo
         if (dir.length > 3) {
             pista.textContent = 'Buscando calle...';
+            pista.style.color = 'inherit';
             
-            // Une la calle, comuna y restringe a Santiago, Chile para mayor precisión
             let textoBusqueda = dir + ", " + (com ? com + ", " : "") + "Región Metropolitana, Chile";
             let urlBusqueda = "https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(textoBusqueda);
 
@@ -318,9 +309,17 @@
                         
                         mapa.setView([lat, lon], 16);
                         marcador.setLatLng([lat, lon]);
+                        
                         pista.textContent = 'Puedes arrastrar el pin si quieres ser más exacto';
+                        pista.style.color = 'inherit';
+                        
+                        // La API validó la existencia de la calle
+                        direccionVerificada = true;
                     } else {
-                        pista.textContent = 'Calle no encontrada (Ajusta el texto o usa el mapa)';
+                        // La API no encontró la calle
+                        pista.innerHTML = '<b>⚠️ Calle no encontrada.</b> Ajusta el texto o arrastra el pin.';
+                        pista.style.color = '#d93025';
+                        direccionVerificada = false;
                     }
                 })
                 .catch(e => {
@@ -329,14 +328,24 @@
         }
     }
 
-    // El mapa buscará la calle apenas el usuario termine de escribir y salga del campo de texto (evento 'blur')
     campoDireccion.addEventListener('blur', buscarDireccionEnMapa);
     campoComuna.addEventListener('blur', buscarDireccionEnMapa);
     
-
-    // Seguro contra errores: Antes de que el formulario viaje a Django, 
-    // lo atrapamos y le forzamos la posición exacta en la que haya quedado el pin.
     document.querySelector('form').addEventListener('submit', function(event) {
+        
+        if (!direccionVerificada) {
+            event.preventDefault(); 
+            
+            pista.innerHTML = '<b>⚠️ Espera, dirección no válida.</b> Verifícala en el mapa antes de continuar.';
+            pista.style.color = '#d93025';
+            
+            // Forzamos una búsqueda manual por si el usuario hizo clic en "Continuar" muy rápido
+            if (campoDireccion.value.length > 3) {
+                buscarDireccionEnMapa();
+            }
+            return;
+        }
+
         var posicionFinal = marcador.getLatLng();
         campoLat.value = posicionFinal.lat.toFixed(6);
         campoLon.value = posicionFinal.lng.toFixed(6);
