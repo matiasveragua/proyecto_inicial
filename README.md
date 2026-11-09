@@ -39,26 +39,7 @@ datos igual que esa, nunca a mano en la base de uno.
 
 ## Cuentas
 
-No hay usuarios de prueba en el repositorio. Crea el tuyo desde
-`/accounts/registro/`, o uno de administrador con:
-
-```
-python manage.py createsuperuser
-```
-
-## Cómo está organizado
-
-| Ruta | Qué es |
-|---|---|
-| `/` | Inicio, el mapa con los reportes |
-| `/ubicacion/` | Paso 1, dónde está el desperfecto |
-| `/reportar/` | Paso 2, qué es y la foto |
-| `/mis-reportes/` | Los reportes del usuario conectado |
-| `/accounts/login/` | Iniciar sesión |
-| `/accounts/registro/` | Crear una cuenta |
-| `/admin/` | Administración de Django |
-
-Las plantillas están todas en `reportes/templates/reportes/`.
+No hay usuarios de prueba en el repositorio. Crea el tuyo desde la aplicación
 
 ## Como crear un superusuario para acceder al panel municipal
 
