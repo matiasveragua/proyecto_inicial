@@ -21,10 +21,7 @@ from math import asin, cos, radians, sin, sqrt
 
 from .models import Reporte
 
-# Hasta donde buscamos. A 150 m dos avisos son, con cualquier criterio, el
-# mismo bache; mas lejos ya es otro problema de la misma cuadra.
-# PROPUESTA mia: el equipo todavia no fijo este numero.
-RADIO_METROS = 150
+RADIO_METROS = 500
 
 # Un reporte atendido ya se arreglo y uno descartado no era un desperfecto:
 # ninguno de los dos sirve para confirmar, asi que no se muestran.
