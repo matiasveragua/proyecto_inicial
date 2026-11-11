@@ -364,14 +364,17 @@
     }
     .custom-filter.btn.activate svg { transform: rotate(180deg);}
     .blur-overlay {
-        position: absolute; inset: 0;
+        position: fixed; /* Cambiado a fixed para cubrir toda la pantalla */
+        inset: 0;
         background: rgba(0,0,0,0.15);
         backdrop-filter: blur(8px);
-        z-index: 2050;
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 2050; /* ¡Mantenlo en 2050! */
         display: none;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
+
     .blur-overlay.show {display: block; opacity: 1;}
     .bottom-sheet-menu {
         position: absolute;
@@ -411,6 +414,134 @@
     .hidden-radio:checked + .custom-check svg { opacity: 1; transform: scale(1); }
     
     .bs-apply { width: 100%; background-color: var(--amarillo-vial); color: #1B2430; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; }
+    
+    /* --- ESTILOS DE LA BARRA DE BÚSQUEDA --- */
+    .search-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -40%);
+        width: 90%;
+        max-width: 450px;
+        max-height: 400px;
+        background-color: var(--fondo-pantalla);
+        border-radius: 24px;
+        z-index: 3000; 
+        display: flex;
+        flex-direction: column;
+        padding: 24px 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    
+    .search-modal.show {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, -50%);
+    }
+
+    .search-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex: none;
+    }
+
+    .search-input-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        background-color: var(--fondo-tarjeta);
+        border: 1.5px solid var(--amarillo-vial);
+        border-radius: 14px;
+        padding: 0 14px;
+        height: 52px;
+    }
+
+    .search-input-wrapper svg {
+        width: 20px; height: 20px; 
+        stroke: var(--texto-secundario); 
+        fill: none; stroke-width: 2.5; stroke-linecap: round;
+        flex: none;
+    }
+
+    #search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--texto-principal);
+        font-size: 16px;
+        font-weight: 500;
+        padding: 0 10px;
+        outline: none;
+        width: 100%;
+    }
+    
+    #search-input::placeholder { color: var(--texto-secundario); }
+
+    .cancel-search-btn {
+        background: none;
+        border: none;
+        color: var(--amarillo-vial);
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .search-results {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .section-title {
+        font-size: 14px;
+        color: var(--texto-secundario);
+        font-weight: 700;
+        margin: 0 0 12px 10px;
+    }
+
+    .search-group {
+        background-color: var(--fondo-tarjeta);
+        border-radius: 16px;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .search-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(150, 150, 150, 0.08);
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .search-item:last-child { border-bottom: none; }
+    .search-item:active { background-color: rgba(255,255,255,0.05); }
+
+    .search-icon-box {
+        width: 38px; height: 38px;
+        border-radius: 50%;
+        background-color: rgba(150, 150, 150, 0.08);
+        display: grid;
+        place-items: center;
+        color: var(--texto-secundario);
+        flex: none;
+    }
+
+    .search-icon-box svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;}
+    
+    .search-item-text { display: flex; flex-direction: column; gap: 2px; }
+    .search-item-text b { font-size: 16px; font-weight: 700; color: var(--texto-principal); }
+    .search-item-text span { font-size: 13px; color: var(--texto-secundario); font-weight: 500; }
+
 </style>
 <!-- Zona superior (El mapa) -->
 <div class="mapa-fondo">
@@ -425,15 +556,21 @@
             <a href="{% url 'login' %}" style="font-size: 15px; font-weight: bold; color: inherit; text-decoration: none;">Iniciar sesión</a>
         {% endif %}
     </div>
+    
     <!--Botones flotantes (Lupa, Capas, Info) -->
     <div id="contenedor-botones-mapa" class="map-btns" style="position: absolute; top: 52px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
-        
+        <div id="btn-buscar" class="rbtn" role="button" aria-label="Buscar dirección" onclick="openSearch()">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
         <div id="btn-satelite" class="rbtn" role="button" aria-label="Vista satélite">
             <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 16.5l9 5 9-5"/></svg>
         </div>
         
         <div id="btn-leyenda" class="rbtn" role="button" aria-label="Qué significan los pines">
             <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        </div>
+        <div id="btn-centrar" class="rbtn" role="button" aria-label="Centrar ubicación">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="7"/></svg>
         </div>
         
     </div>
@@ -613,12 +750,61 @@
         </svg>
         Reportar desperfecto
     </a>  
+    <!-- Contenedor Búsqueda Centrado -->
+    <div id="search-modal" class="search-modal">
+        <div class="search-header">
+            <div class="search-input-wrapper">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" id="search-input" placeholder="Buscar dirección...">
+            </div>
+            <button id="btn-cancel-search" class="cancel-search-btn" onclick="closeSearch()">Cancelar</button>
+        </div>
+        
+        <div class="search-results">
+            
+            <!-- SUGERENCIAS DINÁMICAS -->
+            {% if sugerencias %}
+                <h4 class="section-title">Sugerencias</h4>
+                <div class="search-group">
+                    {% for sug in sugerencias %}
+                        <!-- Puedes agregarle un onclick para que al tocar, el mapa viaje a esa ubicación -->
+                        <div class="search-item" onclick="irAUbicacion({{ sug.latitud }}, {{ sug.longitud }})">
+                            <div class="search-icon-box">
+                                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            </div>
+                            <div class="search-item-text">
+                                <b>{{ sug.calle_numero }}</b>
+                                <span>{{ sug.comuna }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-    <div id="filters-overlay" class="blur-overlay" onclick="closeMenus()"></div>
-    
-    
+            <!-- RECIENTES DINÁMICOS -->
+            {% if recientes %}
+                <h4 class="section-title">Recientes</h4>
+                <div class="search-group">
+                    {% for rec in recientes %}
+                        <div class="search-item" onclick="irAUbicacion({{ rec.latitud }}, {{ rec.longitud }})">
+                            <div class="search-icon-box">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="search-item-text">
+                                <b>{{ rec.calle_numero }}</b>
+                                <span>{{ rec.comuna }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
 
 </div> 
+<div id="filters-overlay" class="blur-overlay" onclick="closeMenus()"></div>
 
 
 
@@ -686,11 +872,30 @@
         document.getElementById('filters-overlay').classList.add('show');
         }
     }
+
+        function openSearch() {
+        document.getElementById('search-modal').classList.add('show');
+        document.getElementById('filters-overlay').classList.add('show');
+        // Enfoca el input automáticamente al abrir
+        setTimeout(() => document.getElementById('search-input').focus(), 300);
+    }
+
+    function closeSearch() {
+        closeMenus(); // Reutilizamos tu función que apaga el fondo difuminado
+    }
+
+    // MODIFICA TU FUNCIÓN EXISTENTE PARA QUE QUEDE ASÍ:
     function closeMenus() {
         document.querySelectorAll('.custom-filter.btn').forEach(btn => btn.classList.remove('activate'));
         document.querySelectorAll('.bottom-sheet-menu').forEach(menu => menu.classList.remove('show'));
+        
+        // Agregar esto para que cierre también el modal de búsqueda
+        const searchModal = document.getElementById('search-modal');
+        if(searchModal) searchModal.classList.remove('show');
+        
         document.getElementById('filters-overlay').classList.remove('show');
     }
+
     
     function clearFilter(menuType) {
         const checkboxes = document.querySelectorAll(`input[name="radio-${menuType}"]`);
@@ -969,9 +1174,13 @@
                         let tagColor = "o";
                         if (statusText === "Recibido") tagColor = "b";
                         if (statusText === "Atendido") tagColor = "g";
+                        let imagenThumb = p.foto_url 
+                            ? `<img src="${p.foto_url}" alt="Foto del reporte" style="width: 100%; height: 100%; object-fit: cover;">` 
+                            : '';
+
                         reportsHtml += `
-                            <div class="rep" onclick="window.location.href='/reporte/${p.id}'">
-                                <span class="thumb"></span>
+                            <div class="rep" onclick="window.location.href='/reporte/${p.id}/'">
+                                <span class="thumb">${imagenThumb}</span>
                                 <span class="t">
                                     <b>${p.categoria || "Desperfecto"}</b>
                                     <span class="a">${p.comuna || ""} - A ${Math.round(distance)}m</span>
@@ -979,6 +1188,7 @@
                                 </span>
                             </div> 
                         `;
+
                     }
                 });
             
@@ -1007,37 +1217,104 @@
         
         // Solicitar Ubi
         //Comentar para hacer pruebas
+        // ===== LÓGICA DE UBICACIÓN =====
+        let circleArea = null;
+        let realLat = window.currentLat; 
+        let realLon = window.currentLon;
+        let isArtificial = false;
+        let seguirUsuario = true; 
+        mapa.on('dragstart', function() {
+            seguirUsuario = false;
+        });
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    window.currentLat = position.coords.latitude;
-                    window.currentLon = position.coords.longitude;
-                    blueDot.setLatLng([currentLat, currentLon]);
-                    const searchRadius = 500;
-                    let circleArea = L.circle([currentLat, currentLon],{
-                        color: '#3478f6',
-                        fillColor: '#3478f6',
-                        fillOpacity: 0.08,
-                        weight: 1,
-                        radius: searchRadius
-                    }).addTo(mapa);
-                    mapa.setView([currentLat, currentLon], 15.4);
-                    loadNearbyReports(currentLat, currentLon, searchRadius);
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    realLat = position.coords.latitude;
+                    realLon = position.coords.longitude;
+                    if (!isArtificial) {
+                        window.currentLat = realLat;
+                        window.currentLon = realLon;
+                        blueDot.setStyle({opacity: 1, fillOpacity: 1});
+                        blueDot.setLatLng([realLat, realLon]);
+                        if (circleArea) {
+                            circleArea.setLatLng([realLat, realLon]);
+                        } else {
+                            circleArea = L.circle([realLat, realLon], {
+                                color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
+                            }).addTo(mapa);
+                        }
+                        if (seguirUsuario) {
+                            mapa.setView([realLat, realLon], 15);
+                            loadNearbyReports(realLat, realLon, window.currentRadius);
+                        }
+                    }
                 },
-                function(error) {
-                    console.warn("No se pudo obtener la ubicación: ", error.message);
-                    loadNearbyReports(currentLat, currentLon, currentRadius);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000, 
-                    maximumAge: 0
-                }
+                (error) => console.error("Error GPS:", error),
+                { enableHighAccuracy: true, maximumAge: 0 }
             );
         } else {
-            loadNearbyReports(currentLat, currentLon, currentRadius);
+            loadNearbyReports(window.currentLat, window.currentLon, window.currentRadius);
         }
+        document.getElementById('btn-centrar').addEventListener('click', () => {
+            isArtificial = false;
+            seguirUsuario = true; 
+            window.currentLat = realLat;
+            window.currentLon = realLon;
+            
+            blueDot.setStyle({opacity: 1, fillOpacity: 1});
+            blueDot.setLatLng([realLat, realLon]);
+            if (circleArea) circleArea.setLatLng([realLat, realLon]);
+            
+            mapa.setView([realLat, realLon], 15);
+            loadNearbyReports(realLat, realLon, window.currentRadius);
+        });
+                // ===== NUEVA LÓGICA DE BÚSQUEDA (CON ENTER) =====
+        const inputBuscarModal = document.querySelector('#search-modal #search-input');
         
+        if (inputBuscarModal) {
+            inputBuscarModal.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const query = this.value.trim();
+                    if(!query) return;
+
+                    // Llama a la API agregando Santiago, Chile para mayor precisión
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Santiago, Chile')}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data && data.length > 0) {
+                                const lat = parseFloat(data[0].lat);
+                                const lon = parseFloat(data[0].lon);
+                                
+                                isArtificial = true;
+                                seguirUsuario = false;
+                                window.currentLat = lat;
+                                window.currentLon = lon;
+                                blueDot.setStyle({opacity: 0, fillOpacity: 0});
+                                
+                                if (circleArea) {
+                                    circleArea.setLatLng([lat, lon]);
+                                } else {
+                                    circleArea = L.circle([lat, lon], {
+                                        color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
+                                    }).addTo(mapa);
+                                }
+                                mapa.setView([lat, lon], 15);
+                                loadNearbyReports(lat, lon, window.currentRadius);
+                                
+                                // Limpia el input y cierra el modal + fondo difuminado
+                                this.value = '';
+                                closeSearch(); 
+                            } else {
+                                alert("No se encontró esa dirección.");
+                            }
+                        })
+                        .catch(err => console.error("Error al buscar:", err));
+                }
+            });
+        }
+
+
         // Ubi para pruebas
         //Descomentar para hacer pruebas
         /*

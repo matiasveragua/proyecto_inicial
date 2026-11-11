@@ -84,17 +84,22 @@ def inicio(request):
             "comuna": r.ubicacion.comuna,
             "estado": r.estado_actual,
             "etiqueta": r.get_estado_actual_display(),
-            "gravedad": calculate_severity(str(r.categoria), r.confirmacion_set.count()) 
+            "gravedad": calculate_severity(str(r.categoria), r.confirmacion_set.count()),
+            "foto_url": r.foto.url if r.foto else "",
         }
         for r in reportes
     ]
 
     contexto = {
         "puntos": puntos,
-        "cantidad_reportes": Reporte.objects.filter(
-            fecha_creacion__gte=hace_una_semana
-        ).count(),
+        # Estas variables las comentamos temporalmente para que 
+        # el servidor vuelva a correr sin arrojar error.
+        # "cantidad_reportes": cantidad,
+        # "sugerencias": lista_de_sugerencias, 
+        # "recientes": lista_de_busquedas_recientes,
     }
+
+
 
     if request.user.is_authenticated:
         contexto["saludo"] = request.user.username.split("@")[0]
