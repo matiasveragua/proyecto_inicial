@@ -363,19 +363,35 @@
         color: var(--fondo-pantalla);
     }
     .custom-filter.btn.activate svg { transform: rotate(180deg);}
+    /* 1. Fondo difuminado para los FILTROS */
     .blur-overlay {
-        position: fixed; /* Cambiado a fixed para cubrir toda la pantalla */
+        position: absolute; 
         inset: 0;
         background: rgba(0,0,0,0.15);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        z-index: 2050; /* ¡Mantenlo en 2050! */
+        z-index: 2050; 
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 26px 26px 0 0; 
+    }
+    .blur-overlay.show { display: block; opacity: 1; }
+
+    /* 2. Fondo difuminado para la BÚSQUEDA */
+    .search-blur-overlay {
+        position: fixed; 
+        inset: 0;
+        background: rgba(0,0,0,0.25);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 2900; 
         display: none;
         opacity: 0;
         transition: opacity 0.3s ease;
     }
+    .search-blur-overlay.show { display: block; opacity: 1; }
 
-    .blur-overlay.show {display: block; opacity: 1;}
     .bottom-sheet-menu {
         position: absolute;
         top:calc(100% + 8px);
@@ -415,31 +431,44 @@
     
     .bs-apply { width: 100%; background-color: var(--amarillo-vial); color: #1B2430; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; }
     
-    /* --- ESTILOS DE LA BARRA DE BÚSQUEDA --- */
+
     .search-modal {
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -40%);
-        width: 90%;
-        max-width: 450px;
-        max-height: 400px;
-        background-color: var(--fondo-pantalla);
-        border-radius: 24px;
-        z-index: 3000; 
+        top: 84px; 
+        left: 16px; 
+        width: calc(100% - 75px); 
+        max-width: 400px;
+        max-height: calc(100vh - 215px);
+        background: #1b2430;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        z-index: 3000;
         display: flex;
         flex-direction: column;
-        padding: 24px 20px;
         opacity: 0;
         pointer-events: none;
-        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        transition: all 0.3s ease;
+        transform: translateY(-10px);
     }
     
     .search-modal.show {
         opacity: 1;
         pointer-events: auto;
-        transform: translate(-50%, -50%);
+        transform: translateY(0);
+    }
+    .map-control-active {
+        background: var(--amarillo-vial, #f7c936) !important;
+        color: #1b2430 !important;
+    }
+    .map-control-active svg {
+        stroke: #1b2430 !important;
+    }
+
+    .search-not-found-msg {
+        padding: 12px 16px;
+        color: #ff6b6b;
+        font-size: 14px;
+        font-weight: 500;
     }
 
     .search-header {
@@ -541,6 +570,81 @@
     .search-item-text { display: flex; flex-direction: column; gap: 2px; }
     .search-item-text b { font-size: 16px; font-weight: 700; color: var(--texto-principal); }
     .search-item-text span { font-size: 13px; color: var(--texto-secundario); font-weight: 500; }
+        .search-section-title {
+        color: #9aa4b2;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 14px 16px 6px;
+    }
+    .search-group-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        margin: 0 16px;
+        overflow: hidden;
+    }
+    .search-result-item {
+        display: flex;
+        align-items: center;
+        padding: 11px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        transition: background 0.15s ease;
+    }
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    .search-result-item:active {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .search-icon-circle {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+    }
+    .search-section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #9aa4b2;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 14px 16px 6px;
+    }
+    .clear-recents-btn {
+        background: none;
+        border: none;
+        color: var(--amarillo-vial, #f7c936);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 2px 4px;
+    }
+    .clear-recents-btn:hover {
+        opacity: 0.8;
+    }
+    .delete-recent-item-btn {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 18px;
+        line-height: 1;
+        padding: 6px 8px;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: color 0.15s ease, background 0.15s ease;
+    }
+    .delete-recent-item-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
 
 </style>
 <!-- Zona superior (El mapa) -->
@@ -739,6 +843,7 @@
                 <!-- Javascript cargará aquí los reportes -->
             </div>
         </div>
+    <div id="filters-overlay" class="blur-overlay" onclick="closeMenus()"></div>
 
     </div> 
 
@@ -751,16 +856,25 @@
         Reportar desperfecto
     </a>  
     <!-- Contenedor Búsqueda Centrado -->
+    <div id="search-overlay" class="search-blur-overlay" onclick="closeSearch()"></div>
+
     <div id="search-modal" class="search-modal">
-        <div class="search-header">
-            <div class="search-input-wrapper">
-                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                <input type="text" id="search-input" placeholder="Buscar dirección...">
+        <!-- Cabecera del buscador -->
+        <div class="search-header" style="display: flex; align-items: center; padding: 16px; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div class="search-input-wrapper" style="flex: 1; display: flex; align-items: center; background: #2c3543; border: 1px solid var(--amarillo-vial, #f7c936); border-radius: 8px; padding: 8px 12px;">
+                <svg width="18" height="18" fill="none" stroke="#888" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" id="search-input" placeholder="Buscar dirección..." autocomplete="off" style="background: transparent; border: none; outline: none; color: #fff; width: 100%; margin-left: 8px; font-size: 16px;">
             </div>
-            <button id="btn-cancel-search" class="cancel-search-btn" onclick="closeSearch()">Cancelar</button>
+            <button onclick="closeSearch()" style="background: none; border: none; color: var(--amarillo-vial, #f7c936); font-size: 15px; font-weight: 600; cursor: pointer;">Cancelar</button>
         </div>
-        
-        <div class="search-results">
+    
+        <!-- Contenedor dinámico de sugerencias -->
+        <div class="search-results" style="overflow-y: auto; padding-bottom: 12px;">
+            <!-- Las sugerencias se cargarán aquí por JS -->
+        </div>
+    </div>
+
+
             
             <!-- SUGERENCIAS DINÁMICAS -->
             {% if sugerencias %}
@@ -804,7 +918,6 @@
 
 
 </div> 
-<div id="filters-overlay" class="blur-overlay" onclick="closeMenus()"></div>
 
 
 
@@ -861,35 +974,48 @@
 <script>
     let currentTypeFilter = [];
     let currentStatusFilter = [];
-    function openMenu(menuType) {
+        function openMenu(menuType) {
         const menu = document.getElementById(`bottom-sheet-${menuType}`);
         const isOpen = menu.classList.contains('show');
         closeMenus(); 
     
         if (!isOpen) { 
-        document.getElementById(`btn-filter-${menuType}`).classList.add('activate');
-        menu.classList.add('show');
-        document.getElementById('filters-overlay').classList.add('show');
+            document.getElementById(`btn-filter-${menuType}`).classList.add('activate');
+            menu.classList.add('show');
+            document.getElementById('filters-overlay').classList.add('show'); 
         }
     }
 
-        function openSearch() {
+    function openSearch() {
         document.getElementById('search-modal').classList.add('show');
-        document.getElementById('filters-overlay').classList.add('show');
-        // Enfoca el input automáticamente al abrir
+        document.getElementById('search-overlay').classList.add('show');
         setTimeout(() => document.getElementById('search-input').focus(), 300);
     }
 
     function closeSearch() {
-        closeMenus(); // Reutilizamos tu función que apaga el fondo difuminado
+        const searchModal = document.getElementById('search-modal');
+        if(searchModal) searchModal.classList.remove('show');
+        
+        const searchOverlay = document.getElementById('search-overlay');
+        if(searchOverlay) searchOverlay.classList.remove('show');
     }
 
-    // MODIFICA TU FUNCIÓN EXISTENTE PARA QUE QUEDE ASÍ:
     function closeMenus() {
         document.querySelectorAll('.custom-filter.btn').forEach(btn => btn.classList.remove('activate'));
         document.querySelectorAll('.bottom-sheet-menu').forEach(menu => menu.classList.remove('show'));
         
-        // Agregar esto para que cierre también el modal de búsqueda
+        const filtersOverlay = document.getElementById('filters-overlay');
+        if(filtersOverlay) filtersOverlay.classList.remove('show');
+    }
+
+    function closeSearch() {
+        closeMenus(); 
+    }
+
+    function closeMenus() {
+        document.querySelectorAll('.custom-filter.btn').forEach(btn => btn.classList.remove('activate'));
+        document.querySelectorAll('.bottom-sheet-menu').forEach(menu => menu.classList.remove('show'));
+        
         const searchModal = document.getElementById('search-modal');
         if(searchModal) searchModal.classList.remove('show');
         
@@ -1119,6 +1245,11 @@
                 const svgIcon = ICONOS_SVG[reportType] || ICONOS_SVG['default'];
                 container.innerHTML = `<div class="marker-pin" style="box-shadow: none; border: 1px solid rgba(150,150,150,0.2);">${svgIcon}</div>`;
             })
+            document.querySelectorAll('.icono-leyenda').forEach(function(container) {
+                const reportType = container.getAttribute('data-tipo');
+                const svgIcon = ICONOS_SVG[reportType] || ICONOS_SVG['default'];
+                container.innerHTML = `<div class="marker-pin">${svgIcon}</div>`;
+            });
 
             window.loadNearbyReports= function(centerLat, centerLon, radiusMeters){
                 const reportsData = document.getElementById('datos-reportes');
@@ -1268,52 +1399,352 @@
             mapa.setView([realLat, realLon], 15);
             loadNearbyReports(realLat, realLon, window.currentRadius);
         });
-                // ===== NUEVA LÓGICA DE BÚSQUEDA (CON ENTER) =====
-        const inputBuscarModal = document.querySelector('#search-modal #search-input');
-        
-        if (inputBuscarModal) {
-            inputBuscarModal.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const query = this.value.trim();
-                    if(!query) return;
+            // ===== GESTIÓN DE BÚSQUEDA, RECIENTES Y CIERRE DE BLUR =====
+    const searchInput = document.querySelector('#search-modal #search-input');
+    const searchResultsDiv = document.querySelector('#search-modal .search-results');
+    let searchTimeout;
 
-                    // Llama a la API agregando Santiago, Chile para mayor precisión
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Santiago, Chile')}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data && data.length > 0) {
-                                const lat = parseFloat(data[0].lat);
-                                const lon = parseFloat(data[0].lon);
-                                
-                                isArtificial = true;
-                                seguirUsuario = false;
-                                window.currentLat = lat;
-                                window.currentLon = lon;
-                                blueDot.setStyle({opacity: 0, fillOpacity: 0});
-                                
-                                if (circleArea) {
-                                    circleArea.setLatLng([lat, lon]);
-                                } else {
-                                    circleArea = L.circle([lat, lon], {
-                                        color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
-                                    }).addTo(mapa);
-                                }
-                                mapa.setView([lat, lon], 15);
-                                loadNearbyReports(lat, lon, window.currentRadius);
-                                
-                                // Limpia el input y cierra el modal + fondo difuminado
-                                this.value = '';
-                                closeSearch(); 
-                            } else {
-                                alert("No se encontró esa dirección.");
-                            }
-                        })
-                        .catch(err => console.error("Error al buscar:", err));
-                }
-            });
+    const pinIconSvg = `<svg width="18" height="18" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
+    const clockIconSvg = `<svg width="18" height="18" fill="none" stroke="#ccc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 2"/></svg>`;
+
+    function escapeAttr(text) {
+        return String(text || '').replace(/"/g, '&quot;');
+    }
+
+    function getRecentSearches() {
+        const stored = localStorage.getItem('recentSearches');
+        if (stored === null) {
+            const initialRecents = [
+                { title: 'Carlos Valdovinos 450', subtitle: 'San Joaquín', lat: -33.4856, lon: -70.6258 },
+                { title: 'Departamental 1250', subtitle: 'San Joaquín', lat: -33.5015, lon: -70.6190 }
+            ];
+            localStorage.setItem('recentSearches', JSON.stringify(initialRecents));
+            return initialRecents;
+        }
+        try {
+            return JSON.parse(stored) || [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveRecentSearch(title, subtitle, lat, lon) {
+        let recents = getRecentSearches();
+        recents = recents.filter(item => item.title.toLowerCase() !== title.toLowerCase());
+        recents.unshift({ title, subtitle, lat, lon });
+        if (recents.length > 5) recents = recents.slice(0, 5);
+        localStorage.setItem('recentSearches', JSON.stringify(recents));
+    }
+
+        function clearAllRecentSearches() {
+        localStorage.setItem('recentSearches', JSON.stringify([]));
+        refreshSearchView();
+    }
+
+    function removeRecentSearch(index) {
+        const recents = getRecentSearches();
+        recents.splice(index, 1);
+        localStorage.setItem('recentSearches', JSON.stringify(recents));
+        refreshSearchView();
+    }
+
+    function refreshSearchView() {
+        if (!searchResultsDiv) return;
+        const currentQuery = searchInput ? searchInput.value.trim() : '';
+        if (currentQuery.length < 3) {
+            searchResultsDiv.innerHTML = buildRecentSectionHtml();
+        } else {
+            const recentWrapper = document.getElementById('recent-searches-wrapper');
+            if (recentWrapper) {
+                recentWrapper.outerHTML = buildRecentSectionHtml();
+            }
+        }
+    }
+
+    function buildRecentSectionHtml() {
+        const recents = getRecentSearches();
+        if (!recents.length) return '';
+
+        const itemsHtml = recents.map((item, index) => `
+            <div class="search-result-item" data-lat="${item.lat}" data-lon="${item.lon}" data-title="${escapeAttr(item.title)}" data-subtitle="${escapeAttr(item.subtitle)}">
+                <div class="search-icon-circle">${clockIconSvg}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="color: #fff; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</div>
+                    <div style="color: #888; font-size: 13px;">${item.subtitle}</div>
+                </div>
+                <button type="button" class="delete-recent-item-btn" data-index="${index}" title="Eliminar">×</button>
+            </div>
+        `).join('');
+
+        return `
+            <div id="recent-searches-wrapper">
+                <div class="search-section-title">
+                    <span>Recientes</span>
+                    <button type="button" class="clear-recents-btn" id="btn-clear-recents">Borrar</button>
+                </div>
+                <div class="search-group-card">${itemsHtml}</div>
+            </div>
+        `;
+    }
+
+
+    function selectLocation(lat, lon, title, subtitle) {
+        isArtificial = true;
+        seguirUsuario = false;
+        window.currentLat = lat;
+        window.currentLon = lon;
+
+        if (typeof blueDot !== 'undefined' && blueDot) {
+            blueDot.setStyle({ opacity: 0, fillOpacity: 0 });
         }
 
+        if (typeof circleArea !== 'undefined' && circleArea) {
+            circleArea.setLatLng([lat, lon]);
+        } else if (typeof mapa !== 'undefined') {
+            circleArea = L.circle([lat, lon], {
+                color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
+            }).addTo(mapa);
+        }
+
+        if (typeof mapa !== 'undefined') {
+            mapa.setView([lat, lon], 15);
+        }
+        if (typeof loadNearbyReports === 'function') {
+            loadNearbyReports(lat, lon, window.currentRadius);
+        }
+
+        if (title) {
+            saveRecentSearch(title, subtitle || 'Santiago', lat, lon);
+        }
+
+        window.closeSearch();
+    }
+
+    window.seleccionarUbicacion = selectLocation;
+
+    // ===== CONTROLES DE BÚSQUEDA, UBICACIÓN Y VALIDACIÓN =====
+    const searchBtn = document.getElementById('btn-buscar');
+    const locationBtn = document.getElementById('btn-centrar');
+
+    let hasValidSearchResults = false;
+    let isSearchingLocation = false;
+    let locationFlashTimeout = null;
+
+    function isBottomPanelExpanded() {
+        const panel = document.getElementById('panel-inferior');
+        return panel ? panel.classList.contains('expanded-panel') : false;
+    }
+
+    function setLocationButtonActive(isActive) {
+        if (!locationBtn) return;
+        locationBtn.classList.toggle('on', isActive);
+        locationBtn.classList.toggle('map-control-active', isActive);
+    }
+
+    function flashLocationButton() {
+        if (!locationBtn) return;
+        clearTimeout(locationFlashTimeout);
+        setLocationButtonActive(true);
+        locationFlashTimeout = setTimeout(() => {
+            setLocationButtonActive(false);
+        }, 1000);
+    }
+
+    if (locationBtn) {
+        locationBtn.addEventListener('click', flashLocationButton);
+    }
+
+    function selectLocation(lat, lon, title, subtitle) {
+        isArtificial = true;
+        seguirUsuario = false;
+        window.currentLat = lat;
+        window.currentLon = lon;
+        setLocationButtonActive(false);
+
+        if (typeof blueDot !== 'undefined' && blueDot) {
+            blueDot.setStyle({ opacity: 0, fillOpacity: 0 });
+        }
+
+        if (typeof circleArea !== 'undefined' && circleArea) {
+            circleArea.setLatLng([lat, lon]);
+        } else if (typeof mapa !== 'undefined') {
+            circleArea = L.circle([lat, lon], {
+                color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
+            }).addTo(mapa);
+        }
+
+        if (typeof mapa !== 'undefined') {
+            mapa.setView([lat, lon], 15);
+        }
+        if (typeof loadNearbyReports === 'function') {
+            loadNearbyReports(lat, lon, window.currentRadius);
+        }
+
+        if (title) {
+            saveRecentSearch(title, subtitle || 'Santiago', lat, lon);
+        }
+
+        window.closeSearch();
+    }
+
+    window.seleccionarUbicacion = selectLocation;
+
+    window.openSearch = function() {
+        if (isBottomPanelExpanded()) return;
+
+        if (typeof closeMenus === 'function') closeMenus();
+
+        const btnLeyenda = document.getElementById('btn-leyenda');
+        const popupLeyenda = document.getElementById('leyenda-popup');
+        if (btnLeyenda) btnLeyenda.classList.remove('on');
+        if (popupLeyenda) popupLeyenda.style.display = 'none';
+
+        const modal = document.getElementById('search-modal');
+        const overlay = document.getElementById('search-overlay');
+
+        hasValidSearchResults = false;
+        if (searchBtn) {
+            searchBtn.classList.add('on', 'map-control-active');
+        }
+        if (searchInput) searchInput.value = '';
+        if (searchResultsDiv) searchResultsDiv.innerHTML = buildRecentSectionHtml();
+
+        if (modal) modal.classList.add('show');
+        if (overlay) overlay.classList.add('show');
+        if (searchInput) setTimeout(() => searchInput.focus(), 200);
+    };
+
+    window.closeSearch = function() {
+        const modal = document.getElementById('search-modal');
+        if (modal) modal.classList.remove('show');
+
+        if (searchBtn) {
+            searchBtn.classList.remove('on', 'map-control-active');
+        }
+        hasValidSearchResults = false;
+
+        document.querySelectorAll('#search-overlay, #filters-overlay, .search-blur-overlay, .blur-overlay').forEach(el => {
+            el.classList.remove('show');
+        });
+
+        if (searchInput) {
+            searchInput.blur();
+            searchInput.value = '';
+        }
+    };
+
+    if (searchResultsDiv) {
+        searchResultsDiv.addEventListener('click', function(e) {
+            if (e.target.closest('#btn-clear-recents')) {
+                e.stopPropagation();
+                clearAllRecentSearches();
+                return;
+            }
+
+            const deleteBtn = e.target.closest('.delete-recent-item-btn');
+            if (deleteBtn) {
+                e.stopPropagation();
+                const index = parseInt(deleteBtn.dataset.index, 10);
+                removeRecentSearch(index);
+                return;
+            }
+
+            const item = e.target.closest('.search-result-item');
+            if (!item) return;
+            selectLocation(
+                parseFloat(item.dataset.lat),
+                parseFloat(item.dataset.lon),
+                item.dataset.title,
+                item.dataset.subtitle
+            );
+        });
+    }
+
+        if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            hasValidSearchResults = false;
+
+            if (query.length < 3) {
+                isSearchingLocation = false;
+                searchResultsDiv.innerHTML = buildRecentSectionHtml();
+                return;
+            }
+
+            clearTimeout(searchTimeout);
+            isSearchingLocation = true;
+
+            // Bounding box de Gran Santiago (oeste, norte, este, sur)
+            const santiagoViewbox = '-70.88,-33.30,-70.48,-33.66';
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&countrycodes=cl&viewbox=${santiagoViewbox}&bounded=1&q=${encodeURIComponent(query)}&limit=4`;
+
+            searchTimeout = setTimeout(() => {
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        isSearchingLocation = false;
+                        let html = '';
+
+                        // Descarta coincidencias genéricas a nivel de ciudad/región si no se buscó "Santiago"
+                        const validPlaces = (Array.isArray(data) ? data : []).filter(place => {
+                            const isGenericBoundary = place.class === 'boundary' && place.type === 'administrative';
+                            if (isGenericBoundary && !query.toLowerCase().includes('santiago')) {
+                                return false;
+                            }
+                            return true;
+                        });
+
+                        if (validPlaces.length > 0) {
+                            hasValidSearchResults = true;
+                            const suggestionsHtml = validPlaces.map(place => {
+                                const addr = place.address || {};
+                                const road = addr.road || addr.pedestrian || place.name || place.display_name.split(',')[0].trim();
+                                const shortName = (addr.road && addr.house_number) ? `${addr.road} ${addr.house_number}` : road;
+                                const commune = addr.suburb || addr.city_district || addr.town || addr.city || addr.municipality || (place.display_name.split(',')[1] || 'Santiago').trim();
+
+                                return `
+                                    <div class="search-result-item suggestion-item" data-lat="${place.lat}" data-lon="${place.lon}" data-title="${escapeAttr(shortName)}" data-subtitle="${escapeAttr(commune)}">
+                                        <div class="search-icon-circle">${pinIconSvg}</div>
+                                        <div>
+                                            <div style="color: #fff; font-size: 15px; font-weight: 500;">${shortName}</div>
+                                            <div style="color: #888; font-size: 13px;">${commune}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+
+                            html += `
+                                <div class="search-section-title">Sugerencias</div>
+                                <div class="search-group-card">${suggestionsHtml}</div>
+                            `;
+                        } else {
+                            hasValidSearchResults = false;
+                            html += `<div class="search-not-found-msg">Ubicación inexistente, intente otra</div>`;
+                        }
+
+                        html += buildRecentSectionHtml();
+                        searchResultsDiv.innerHTML = html;
+                    })
+                    .catch(err => {
+                        isSearchingLocation = false;
+                        hasValidSearchResults = false;
+                        console.error('Error en API:', err);
+                        searchResultsDiv.innerHTML = `<div class="search-not-found-msg">No se pudo verificar la dirección, intente nuevamente</div>` + buildRecentSectionHtml();
+                    });
+            }, 400);
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (isSearchingLocation || !hasValidSearchResults) return;
+
+                const firstSuggestion = searchResultsDiv.querySelector('.suggestion-item');
+                if (firstSuggestion) firstSuggestion.click();
+            }
+        });
+    }
+    
 
         // Ubi para pruebas
         //Descomentar para hacer pruebas
