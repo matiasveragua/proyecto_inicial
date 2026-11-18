@@ -42,10 +42,8 @@
         position: absolute;
         inset: 0;
         overflow: hidden;
-        contain: strict;   /* nada de Leaflet puede afectar el layout de afuera */
-}
-
-    
+        contain: strict;   
+    }
     .inferior-panel {
         background-color: var(--fondo-pantalla);
         border-radius: 26px 26px 0 0 ;
@@ -332,6 +330,322 @@
             height: 100% !important;
         }
     }
+
+    /* Contenedor de los botones de filtro */
+    .filters-dropdown-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2100;
+    }
+    .custom-filter.btn {
+        background-color: var(--fondo-tarjeta);
+        color: var(--texto-secundario);
+        border: none;
+        padding: 10px 18px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.2 ease;
+    }
+    .custom-filter.btn svg {
+        width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+        transition: transform 0.3s ease;
+    }
+    .custom-filter.btn.activate {
+        background-color: var(--texto-principal);
+        color: var(--fondo-pantalla);
+    }
+    .custom-filter.btn.activate svg { transform: rotate(180deg);}
+    /* 1. Fondo difuminado para los FILTROS */
+    .blur-overlay {
+        position: absolute; 
+        inset: 0;
+        background: rgba(0,0,0,0.15);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 2050; 
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 26px 26px 0 0; 
+    }
+    .blur-overlay.show { display: block; opacity: 1; }
+
+    /* 2. Fondo difuminado para la BÚSQUEDA */
+    .search-blur-overlay {
+        position: fixed; 
+        inset: 0;
+        background: rgba(0,0,0,0.25);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 2900; 
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .search-blur-overlay.show { display: block; opacity: 1; }
+
+    .bottom-sheet-menu {
+        position: absolute;
+        top:calc(100% + 8px);
+        left: 0;
+        right: 0;
+        background-color: var(--fondo-tarjeta);
+        border-radius: 20px;
+        padding: 20px 20px 24px;
+        z-index: 2100;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-10px);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        display: flex; flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .bottom-sheet-menu.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .bs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(150,150,150,0.15); padding-bottom: 14px;}
+    .bs-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--texto-principal); }
+    .bs-btn-clear { background: none; border: none; color: var(--amarillo-vial); font-size: 15px; font-weight: 600; cursor: pointer; }
+    
+    .bs-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; max-height: 180px; overflow-y: auto;}
+    .bs-option { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer; border-bottom: 1px solid rgba(150,150,150,0.08); }
+    .bs-option:last-child { border-bottom: none; }
+    .bs-text { font-size: 15px; font-weight: 600; color: var(--texto-principal); }
+    
+    .hidden-radio { display: none; }
+    .custom-check { 
+        width: 22px; height: 22px; border-radius: 6px; 
+        border: 2px solid var(--texto-secundario); 
+        display: grid; place-items: center; transition: all 0.2s; 
+    }
+    .custom-check svg { stroke: #1B2430; stroke-width: 3; width: 14px; height: 14px; fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform: scale(0.5); transition: all 0.2s;}
+    
+    .hidden-radio:checked + .custom-check { background-color: var(--amarillo-vial); border-color: var(--amarillo-vial); }
+    .hidden-radio:checked + .custom-check svg { opacity: 1; transform: scale(1); }
+    
+    .bs-apply { width: 100%; background-color: var(--amarillo-vial); color: #1B2430; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 700; cursor: pointer; }
+    
+
+    .search-modal {
+        position: fixed;
+        top: 84px; 
+        left: 16px; 
+        width: calc(100% - 75px); 
+        max-width: 400px;
+        max-height: calc(100vh - 215px);
+        background: #1b2430;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        z-index: 3000;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        transform: translateY(-10px);
+    }
+    
+    .search-modal.show {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+    .map-control-active {
+        background: var(--amarillo-vial, #f7c936) !important;
+        color: #1b2430 !important;
+    }
+    .map-control-active svg {
+        stroke: #1b2430 !important;
+    }
+
+    .search-not-found-msg {
+        padding: 12px 16px;
+        color: #ff6b6b;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .search-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex: none;
+    }
+
+    .search-input-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        background-color: var(--fondo-tarjeta);
+        border: 1.5px solid var(--amarillo-vial);
+        border-radius: 14px;
+        padding: 0 14px;
+        height: 52px;
+    }
+
+    .search-input-wrapper svg {
+        width: 20px; height: 20px; 
+        stroke: var(--texto-secundario); 
+        fill: none; stroke-width: 2.5; stroke-linecap: round;
+        flex: none;
+    }
+
+    #search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--texto-principal);
+        font-size: 16px;
+        font-weight: 500;
+        padding: 0 10px;
+        outline: none;
+        width: 100%;
+    }
+    
+    #search-input::placeholder { color: var(--texto-secundario); }
+
+    .cancel-search-btn {
+        background: none;
+        border: none;
+        color: var(--amarillo-vial);
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .search-results {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .section-title {
+        font-size: 14px;
+        color: var(--texto-secundario);
+        font-weight: 700;
+        margin: 0 0 12px 10px;
+    }
+
+    .search-group {
+        background-color: var(--fondo-tarjeta);
+        border-radius: 16px;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .search-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(150, 150, 150, 0.08);
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .search-item:last-child { border-bottom: none; }
+    .search-item:active { background-color: rgba(255,255,255,0.05); }
+
+    .search-icon-box {
+        width: 38px; height: 38px;
+        border-radius: 50%;
+        background-color: rgba(150, 150, 150, 0.08);
+        display: grid;
+        place-items: center;
+        color: var(--texto-secundario);
+        flex: none;
+    }
+
+    .search-icon-box svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;}
+    
+    .search-item-text { display: flex; flex-direction: column; gap: 2px; }
+    .search-item-text b { font-size: 16px; font-weight: 700; color: var(--texto-principal); }
+    .search-item-text span { font-size: 13px; color: var(--texto-secundario); font-weight: 500; }
+        .search-section-title {
+        color: #9aa4b2;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 14px 16px 6px;
+    }
+    .search-group-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        margin: 0 16px;
+        overflow: hidden;
+    }
+    .search-result-item {
+        display: flex;
+        align-items: center;
+        padding: 11px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        transition: background 0.15s ease;
+    }
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    .search-result-item:active {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .search-icon-circle {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+    }
+    .search-section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #9aa4b2;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 14px 16px 6px;
+    }
+    .clear-recents-btn {
+        background: none;
+        border: none;
+        color: var(--amarillo-vial, #f7c936);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 2px 4px;
+    }
+    .clear-recents-btn:hover {
+        opacity: 0.8;
+    }
+    .delete-recent-item-btn {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 18px;
+        line-height: 1;
+        padding: 6px 8px;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: color 0.15s ease, background 0.15s ease;
+    }
+    .delete-recent-item-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+
 </style>
 <!-- Zona superior (El mapa) -->
 <div class="mapa-fondo">
@@ -346,9 +660,12 @@
             <a href="{% url 'login' %}" style="font-size: 15px; font-weight: bold; color: inherit; text-decoration: none;">Iniciar sesión</a>
         {% endif %}
     </div>
+    
     <!--Botones flotantes (Lupa, Capas, Info) -->
     <div id="contenedor-botones-mapa" class="map-btns" style="position: absolute; top: 52px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
-        
+        <div id="btn-buscar" class="rbtn" role="button" aria-label="Buscar dirección" onclick="openSearch()">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
         <div id="btn-satelite" class="rbtn" role="button" aria-label="Vista satélite">
             <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5M3 16.5l9 5 9-5"/></svg>
         </div>
@@ -356,24 +673,38 @@
         <div id="btn-leyenda" class="rbtn" role="button" aria-label="Qué significan los pines">
             <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
         </div>
+        <div id="btn-centrar" class="rbtn" role="button" aria-label="Centrar ubicación">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round;"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="7"/></svg>
+        </div>
         
     </div>
 </div>
     <!-- Popup de leyenda-->
     <div id="leyenda-popup" class="legpop2" style="display: none;">
-        <div class="lh"><b>Así se leen los pines</b></div>
-        <div class="lrow">
-            <div class="li">
-                <span class="mk s" style="background: #1b2430"><svg viewBox="0 0 24 24" style="stroke: #ffc20e;"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 12h16M12 5v14"/></svg></span>
+        <div class="lh" style="margin-bottom: 12px;"><b>Así se leen los pines</b></div>
+        <div class="lrow" style="padding: 20px 10px; background: var(--fondo-pantalla); border-radius: 16px;">
+            <div class="li" style="gap: 12px;">
+                <div class="mk s" style="width: 32px; height: 32px;">
+                    <div class="icono-leyenda" data-tipo="Otro" style="width:100%; height:100%;"></div>
+                </div>
+                <span class="ll">Baja</span>
+            </div>
+            <div class="li" style="gap: 12px;">
+                <div class="mk m" style="width: 42px; height: 42px;">
+                    <div class="icono-leyenda" data-tipo="Bache o calzada rota" style="width:100%; height:100%;"></div>
+                </div>
                 <span class="ll">Media</span>
             </div>
-            <div class="li">
-                <span class="mk l" style="background:#1b2430"><svg viewBox="0 0 24 24" style="stroke: #ffc20e;"><circle cx="12" cy="9" r="6"/><path d="M12 15v6.5"/></svg></span>
+            <div class="li" style="gap: 12px;">
+                <div class="mk l" style="width: 52px; height: 52px;">
+                    <div class="icono-leyenda" data-tipo="Árbol con riesgo de caída" style="width:100%; height:100%;"></div>
+                </div>
                 <span class="ll">Alta</span>
             </div>
         </div>
-        <p>El tamaño indica la gravedad del problema; el ícono, de qué tipo es.</p>
+        <p style="margin-top: 12px;">El tamaño indica la gravedad del problema; el ícono, de qué tipo es.</p>
     </div>
+
 
 <!-- Zona inferior (El menú) -->
 <div class="inferior-panel low" id="panel-inferior">
@@ -401,48 +732,193 @@
             </div>
         </div>
         
-        <div class="chips">
-            <span class="fchip on">Todos</span>
-            <span class="fchip">Recibido</span>
-            <span class="fchip">En revisión</span>
-        </div>
-        
-        <div class="report-scroll" id="lista-reportes">
-            {% if report_list %}           
-                <div class="group">
-                    {% for report in report_list %}
-                        <div class="rep">
-                            <span class="thumb"></span>
-                            <span class="t">
-                                <b>{{ report.title|default:"Desperfecto reportado" }}</b>
-                                <span class="a">{{ report.direction|default:"Cerca de ti" }}</span>
-                                <span class="tag o"><i></i>En revisión</span>
-                            </span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty">
-                    <div class="ic">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="10" r="2.4"/>
-                        </svg>
+        <!--Botones de filtros-->
+        <div class="filters-dropdown-container">
+            <button id="btn-filter-type" class="custom-filter btn" onclick="openMenu('type')">
+                <span>Tipo</span>
+                <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <button id="btn-filter-status" class="custom-filter btn" onclick="openMenu('status')">
+                <span>Estado</span>
+                <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <!-- Menu "tipo" -->
+            <div id="bottom-sheet-type" class="bottom-sheet-menu">
+                <div class="bs-header">
+                    <h3>Tipo de reporte</h3>
+                    <button class="bs-btn-clear" onclick="clearFilter('type')">Limpiar</button>
+            </div>
+                <div class="bs-options">
+                <label class="bs-option">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="icono-filtro" data-tipo="Bache o calzada rota" style="width: 28px; height: 28px;"></div>
+                        <span class="bs-text">Bache</span>
                     </div>
-                    <h3>Sin reportes cercanos</h3>
-                    <p>Parece que todo está en orden por aquí. ¡Navega por el mapa para explorar!</p>
-                </div>
-            {% endif %}
+                    <input type="checkbox" name="radio-type" value="Bache o calzada rota" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                
+                <label class="bs-option">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="icono-filtro" data-tipo="Vereda dañada" style="width: 28px; height: 28px;"></div>
+                        <span class="bs-text">Vereda dañada</span>
+                    </div>
+                    <input type="checkbox" name="radio-type" value="Vereda dañada" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                
+                <label class="bs-option">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="icono-filtro" data-tipo="Semáforo o señalética" style="width: 28px; height: 28px;"></div>
+                        <span class="bs-text">Semáforo</span>
+                    </div>
+                    <input type="checkbox" name="radio-type" value="Semáforo o señalética" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                
+                <label class="bs-option">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="icono-filtro" data-tipo="Cable o poste" style="width: 28px; height: 28px;"></div>
+                        <span class="bs-text">Poste</span>
+                    </div>
+                    <input type="checkbox" name="radio-type" value="Cable o poste" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                
+                <label class="bs-option">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="icono-filtro" data-tipo="Árbol con riesgo de caída" style="width: 28px; height: 28px;"></div>
+                        <span class="bs-text">Árbol con riesgo de caída</span>
+                    </div>
+                    <input type="checkbox" name="radio-type" value="Árbol con riesgo de caída" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                
+                <label class="bs-option">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="icono-filtro" data-tipo="Otro" style="width: 28px; height: 28px;"></div>
+                        <span class="bs-text">Otro</span>
+                    </div>
+                    <input type="checkbox" name="radio-type" value="Otro" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+            </div>
+            <div class="bs-footer">
+                <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
+            </div>
+        </div>
+    
+        <!--Menu estado-->
+        <div id="bottom-sheet-status" class="bottom-sheet-menu">
+            <div class="bs-header">
+                <h3>Estado del reporte</h3>
+                <button class="bs-btn-clear" onclick="clearFilter('status')">Limpiar</button>
+            </div>
+            <div class="bs-options">
+                <label class="bs-option">
+                    <span class="bs-text">Recibido</span>
+                    <input type="checkbox" name="radio-status" value="Recibido" class="hidden-radio">
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>  
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">En revisión</span>
+                    <input type="checkbox" name="radio-status" value="En revisión" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+                <label class="bs-option">
+                    <span class="bs-text">Atendido</span>
+                    <input type="checkbox" name="radio-status" value="Atendido" class="hidden-radio" >
+                    <div class="custom-check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+                </label>
+            </div>
+            <div class="bs-footer">
+                <button class="bs-apply" onclick="applyFilters()">Ver reportes</button>
+            </div>
         </div>
     </div>
 
-    <!-- Botón principal -->
-    <a href="{% url 'reportar' %}" class="principal-btn" style="text-decoration: none;">
+<!-- Contenedor dinámico de la lista -->
+        <div style="position: relative; flex: 1; display: flex; flex-direction:column; min-height: 0; margin: 0 -20px; padding: 0 20px;">
+            <div class="report-scroll" id="lista-reportes">
+                <!-- Javascript cargará aquí los reportes -->
+            </div>
+        </div>
+    <div id="filters-overlay" class="blur-overlay" onclick="closeMenus()"></div>
+
+    </div> 
+
+
+    <!-- BOTÓN DE REPORTAR-->
+    <a href="{% url 'ubicacion' %}" class="principal-btn" style="text-decoration: none;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-            <path d="M12 5v14M5 12h14"/>
+        <path d="M12 5v14M5 12h14"/>
         </svg>
         Reportar desperfecto
     </a>  
-</div>
+    <!-- Contenedor Búsqueda Centrado -->
+    <div id="search-overlay" class="search-blur-overlay" onclick="closeSearch()"></div>
+
+    <div id="search-modal" class="search-modal">
+        <!-- Cabecera del buscador -->
+        <div class="search-header" style="display: flex; align-items: center; padding: 16px; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div class="search-input-wrapper" style="flex: 1; display: flex; align-items: center; background: #2c3543; border: 1px solid var(--amarillo-vial, #f7c936); border-radius: 8px; padding: 8px 12px;">
+                <svg width="18" height="18" fill="none" stroke="#888" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" id="search-input" placeholder="Buscar dirección..." autocomplete="off" style="background: transparent; border: none; outline: none; color: #fff; width: 100%; margin-left: 8px; font-size: 16px;">
+            </div>
+            <button onclick="closeSearch()" style="background: none; border: none; color: var(--amarillo-vial, #f7c936); font-size: 15px; font-weight: 600; cursor: pointer;">Cancelar</button>
+        </div>
+    
+        <!-- Contenedor dinámico de sugerencias -->
+        <div class="search-results" style="overflow-y: auto; padding-bottom: 12px;">
+            <!-- Las sugerencias se cargarán aquí por JS -->
+        </div>
+    </div>
+
+
+            
+            <!-- SUGERENCIAS DINÁMICAS -->
+            {% if sugerencias %}
+                <h4 class="section-title">Sugerencias</h4>
+                <div class="search-group">
+                    {% for sug in sugerencias %}
+                        <!-- Puedes agregarle un onclick para que al tocar, el mapa viaje a esa ubicación -->
+                        <div class="search-item" onclick="irAUbicacion({{ sug.latitud }}, {{ sug.longitud }})">
+                            <div class="search-icon-box">
+                                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            </div>
+                            <div class="search-item-text">
+                                <b>{{ sug.calle_numero }}</b>
+                                <span>{{ sug.comuna }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- RECIENTES DINÁMICOS -->
+            {% if recientes %}
+                <h4 class="section-title">Recientes</h4>
+                <div class="search-group">
+                    {% for rec in recientes %}
+                        <div class="search-item" onclick="irAUbicacion({{ rec.latitud }}, {{ rec.longitud }})">
+                            <div class="search-icon-box">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="search-item-text">
+                                <b>{{ rec.calle_numero }}</b>
+                                <span>{{ rec.comuna }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+</div> 
+
 
 
 
@@ -478,7 +954,7 @@
 
         panel.addEventListener('touchend', function(e) {
             let toqueFinY = e.changedTouches[0].screenY;
-            let diferencia = toqueInicioY - toqueFinY; // Positivo = arrastre hacia arriba
+            let diferencia = toqueInicioY - toqueFinY; 
 
             if (diferencia > 40 && panel.classList.contains('low')) {
                 togglePanel();
@@ -493,6 +969,87 @@
         }, {passive: true});
     });
 </script>
+
+<!--  SCRIPT PARA LOS MENÚS DE FILTROS -->
+<script>
+    let currentTypeFilter = [];
+    let currentStatusFilter = [];
+        function openMenu(menuType) {
+        const menu = document.getElementById(`bottom-sheet-${menuType}`);
+        const isOpen = menu.classList.contains('show');
+        closeMenus(); 
+    
+        if (!isOpen) { 
+            document.getElementById(`btn-filter-${menuType}`).classList.add('activate');
+            menu.classList.add('show');
+            document.getElementById('filters-overlay').classList.add('show'); 
+        }
+    }
+
+    function openSearch() {
+        document.getElementById('search-modal').classList.add('show');
+        document.getElementById('search-overlay').classList.add('show');
+        setTimeout(() => document.getElementById('search-input').focus(), 300);
+    }
+
+    function closeSearch() {
+        const searchModal = document.getElementById('search-modal');
+        if(searchModal) searchModal.classList.remove('show');
+        
+        const searchOverlay = document.getElementById('search-overlay');
+        if(searchOverlay) searchOverlay.classList.remove('show');
+    }
+
+    function closeMenus() {
+        document.querySelectorAll('.custom-filter.btn').forEach(btn => btn.classList.remove('activate'));
+        document.querySelectorAll('.bottom-sheet-menu').forEach(menu => menu.classList.remove('show'));
+        
+        const filtersOverlay = document.getElementById('filters-overlay');
+        if(filtersOverlay) filtersOverlay.classList.remove('show');
+    }
+
+    function closeSearch() {
+        closeMenus(); 
+    }
+
+    function closeMenus() {
+        document.querySelectorAll('.custom-filter.btn').forEach(btn => btn.classList.remove('activate'));
+        document.querySelectorAll('.bottom-sheet-menu').forEach(menu => menu.classList.remove('show'));
+        
+        const searchModal = document.getElementById('search-modal');
+        if(searchModal) searchModal.classList.remove('show');
+        
+        document.getElementById('filters-overlay').classList.remove('show');
+    }
+
+    
+    function clearFilter(menuType) {
+        const checkboxes = document.querySelectorAll(`input[name="radio-${menuType}"]`);
+        checkboxes.forEach(radio => radio.checked = false);
+        document.querySelector(`#btn-filter-${menuType} span`).innerText = menuType === 'type' ? 'Tipo' : 'Estado';
+        if (menuType === 'type') currentTypeFilter = [];
+        if (menuType === 'status') currentStatusFilter = [];
+        closeMenus();
+        loadNearbyReports(currentLat, currentLon, currentRadius);
+    }
+    function applyFilters() {
+        const selectedType = Array.from(document.querySelectorAll('input[name="radio-type"]:checked'));
+        const selectedStatus = Array.from(document.querySelectorAll('input[name="radio-status"]:checked'));
+        currentTypeFilter = selectedType.map(cb => cb.value);
+        currentStatusFilter = selectedStatus.map(cb => cb.value)
+        const btnType = document.querySelector('#btn-filter-type span');
+        if (selectedType.length === 0) btnType.innerText = 'Tipo';
+        else if (selectedType.length ===1) btnType.innerText ='Tipo · ' + selectedType[0].parentElement.querySelector('.bs-text').innerText.split(' ')[0];
+        else btnType.innerText = 'Tipo · ' + selectedType.length;
+        const btnStatus = document.querySelector('#btn-filter-status span');
+        if (selectedStatus.length === 0) btnStatus.innerText = 'Estado';
+        else if (selectedStatus.length === 1) btnStatus.innerText = 'Estado · ' + selectedStatus[0].parentElement.querySelector('.bs-text').innerText.split(' ')[0];
+        else btnStatus.innerText = 'Estado · ' + selectedStatus.length;
+        closeMenus();
+        loadNearbyReports(currentLat, currentLon, currentRadius); // Recarga los marcadores del mapa
+    }
+</script>
+
 
 {{ puntos|json_script:"datos-reportes" }}
 
@@ -521,6 +1078,10 @@
             fillOpacity: 1,
             radius: 7
         }).addTo(mapa);
+        var markerLayer = L.layerGroup().addTo(mapa);
+                window.currentLat = -33.449034;
+                window.currentLon = -70.672983;
+                window.currentRadius = 500;
 
         // --- PINES DINÁMICOS ---
         const COLOR_ESTADO = {
@@ -679,51 +1240,90 @@
 
             'default': `<svg viewBox="0 0 24 24" style="width: 62%; height: 62%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;"><path d="M12 2l9.5 17h-19z" stroke-linejoin="round"/><path d="M12 9v4"/><circle cx="12" cy="16.5" r="1.2" fill="currentColor" stroke="none"/></svg>`
         };
-
-        function loadNearbyReports(centerLat, centerLon, radiusMeters){
-            const reportsData = document.getElementById('datos-reportes');
-            if (!reportsData) return;
-            const pointsArray = JSON.parse(reportsData.textContent);
-            const centerLocation = L.latLng(centerLat, centerLon);
-            let nearbyCount = 0;
-            let reportsHtml = '';
-
-            pointsArray.forEach(function (p) {
-                const reportPos = L.latLng(p.lat, p.lon);
-                const distance = centerLocation.distanceTo(reportPos);
-                if (distance <= radiusMeters) {
-                    nearbyCount++;
-                    let dimension = 42
-                    if (p.gravedad == 'Alta') dimension = 52;
-                    if (p.gravedad == 'Baja') dimension = 32;
-
-                    const selectedSvg = ICONOS_SVG[p.categoria] || ICONOS_SVG['default'];
-                    const pintHtml = `<div class="marker-pin">${selectedSvg}</div>`;
-                    const customIcon = L.divIcon({
-                        html: pintHtml,
-                        className: '',
-                        iconSize: [dimension, dimension],
-                        iconAnchor: [dimension / 2, dimension / 2],
-                        popupAnchor: [0, -dimension / 2]
-                    });
-                    const popupText = '<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + (p.etiqueta || '') + '<br><span style="color:#f08a24; font-weight:bold;">A ' + Math.round(distance) + ' metros de ti</span>';
-                    L.marker([p.lat, p.lon], { icon: customIcon}).bindPopup(popupText).addTo(mapa);
-                    let statusText = p.estado || "En revisión";
-                    let tagColor = "o";
-                    if (statusText === "Recibido") tagColor = "b";
-                    if (statusText === "Atendido") tagColor = "g";
-                    reportsHtml += `
-                        <div class="rep">
-                            <span class="thumb"></span>
-                            <span class="t">
-                                <b>${p.categoria || "Desperfecto"}</b>
-                                <span class="a">${p.comuna || ""} - A ${Math.round(distance)}m</span>
-                                <span class="tag ${tagColor}"><i></i>${statusText}</span>
-                            </span>
-                        </div> 
-                    `;
-                }
+            document.querySelectorAll('.icono-filtro').forEach(function(container){
+                const reportType = container.getAttribute('data-tipo');
+                const svgIcon = ICONOS_SVG[reportType] || ICONOS_SVG['default'];
+                container.innerHTML = `<div class="marker-pin" style="box-shadow: none; border: 1px solid rgba(150,150,150,0.2);">${svgIcon}</div>`;
+            })
+            document.querySelectorAll('.icono-leyenda').forEach(function(container) {
+                const reportType = container.getAttribute('data-tipo');
+                const svgIcon = ICONOS_SVG[reportType] || ICONOS_SVG['default'];
+                container.innerHTML = `<div class="marker-pin">${svgIcon}</div>`;
             });
+
+            window.loadNearbyReports= function(centerLat, centerLon, radiusMeters){
+                const reportsData = document.getElementById('datos-reportes');
+                if (!reportsData) return;
+                const pointsArray = JSON.parse(reportsData.textContent);
+                const centerLocation = L.latLng(centerLat, centerLon);
+                let nearbyCount = 0;
+                let reportsHtml = '';
+
+                markerLayer.clearLayers();
+
+                const statusFilter = currentStatusFilter;
+                const typeFilter = currentTypeFilter;                
+                    const ESTADOS_TEXTO = {
+                        'recibido': 'Recibido',
+                        'en_revision': 'En revisión',
+                        'atendido': 'Atendido',
+                        'descartado': 'Descartado'
+                };
+
+                    pointsArray.forEach(function (p) {
+                        let estadoRaw = p.estado ? p.estado.toLowerCase() : 'en_revision';
+                        let statusText = ESTADOS_TEXTO[estadoRaw] || p.estado || "En revisión";
+                        let typeText = p.categoria || "Desconocido"; 
+                        if (statusFilter.length > 0 && !statusFilter.includes(statusText)) {
+                            return;
+                        }
+                        if (typeFilter.length > 0  && !typeFilter.includes(typeText)) {
+                            return;
+                        }
+
+                    const reportPos = L.latLng(p.lat, p.lon);
+                    const distance = centerLocation.distanceTo(reportPos);
+                    if (distance <= radiusMeters) {
+                        nearbyCount++;
+                        let dimension = 42
+                        if (p.gravedad == 'Alta') dimension = 52;
+                        if (p.gravedad == 'Baja') dimension = 32;
+
+                        const selectedSvg = ICONOS_SVG[p.categoria] || ICONOS_SVG['default'];
+                        const pintHtml = `<div class="marker-pin">${selectedSvg}</div>`;
+                        const customIcon = L.divIcon({
+                            html: pintHtml,
+                            className: '',
+                            iconSize: [dimension, dimension],
+                            iconAnchor: [dimension / 2, dimension / 2],
+                            popupAnchor: [0, -dimension / 2]
+                        });
+                        const popupText = '<b>' + p.categoria + '</b><br>' + p.comuna + '<br>' + (p.etiqueta || '') + '<br><span style="color:#f08a24; font-weight:bold;">A ' + Math.round(distance) + ' metros de ti</span><br><br><a href="/reporte/' + p.id + '/"style="color: var(--amarillo-vial); font-weight:bold; text-decoration:none;">Ver detalle</a>';
+                    
+                        L.marker([p.lat, p.lon], { icon: customIcon}).bindPopup(popupText).addTo(markerLayer);
+                    
+                        let tagColor = "o";
+                        if (statusText === "Recibido") tagColor = "b";
+                        if (statusText === "Atendido") tagColor = "g";
+                        let imagenThumb = p.foto_url 
+                            ? `<img src="${p.foto_url}" alt="Foto del reporte" style="width: 100%; height: 100%; object-fit: cover;">` 
+                            : '';
+
+                        reportsHtml += `
+                            <div class="rep" onclick="window.location.href='/reporte/${p.id}/'">
+                                <span class="thumb">${imagenThumb}</span>
+                                <span class="t">
+                                    <b>${p.categoria || "Desperfecto"}</b>
+                                    <span class="a">${p.comuna || ""} - A ${Math.round(distance)}m</span>
+                                    <span class="tag ${tagColor}"><i></i>${statusText}</span>
+                                </span>
+                            </div> 
+                        `;
+
+                    }
+                });
+            
+
         document.getElementById('contador-contraido').textContent = `${nearbyCount} reportes en tu zona`;
         document.getElementById('contador-expandido').textContent = `${nearbyCount} reportes en tu zona`;
 
@@ -748,37 +1348,404 @@
         
         // Solicitar Ubi
         //Comentar para hacer pruebas
+        // ===== LÓGICA DE UBICACIÓN =====
+        let circleArea = null;
+        let realLat = window.currentLat; 
+        let realLon = window.currentLon;
+        let isArtificial = false;
+        let seguirUsuario = true; 
+        mapa.on('dragstart', function() {
+            seguirUsuario = false;
+        });
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    blueDot.setLatLng([lat, lon]);
-                    const searchRadius = 500;
-                    let circleArea = L.circle([lat, lon],{
-                        color: '#3478f6',
-                        fillColor: '#3478f6',
-                        fillOpacity: 0.08,
-                        weight: 1,
-                        radius: searchRadius
-                    }).addTo(mapa);
-                    mapa.setView([lat, lon], 15.4);
-                    loadNearbyReports(lat, lon, searchRadius);
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    realLat = position.coords.latitude;
+                    realLon = position.coords.longitude;
+                    if (!isArtificial) {
+                        window.currentLat = realLat;
+                        window.currentLon = realLon;
+                        blueDot.setStyle({opacity: 1, fillOpacity: 1});
+                        blueDot.setLatLng([realLat, realLon]);
+                        if (circleArea) {
+                            circleArea.setLatLng([realLat, realLon]);
+                        } else {
+                            circleArea = L.circle([realLat, realLon], {
+                                color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
+                            }).addTo(mapa);
+                        }
+                        if (seguirUsuario) {
+                            mapa.setView([realLat, realLon], 15);
+                            loadNearbyReports(realLat, realLon, window.currentRadius);
+                        }
+                    }
                 },
-                function(error) {
-                    console.warn("No se pudo obtener la ubicación: ", error.message);
-                    loadNearbyReports(-33.4489, -70.6693, 50000);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000, 
-                    maximumAge: 0
-                }
+                (error) => console.error("Error GPS:", error),
+                { enableHighAccuracy: true, maximumAge: 0 }
             );
         } else {
-            loadNearbyReports(-33.4489, -70.6693, 50000);
+            loadNearbyReports(window.currentLat, window.currentLon, window.currentRadius);
         }
-        
+        document.getElementById('btn-centrar').addEventListener('click', () => {
+            isArtificial = false;
+            seguirUsuario = true; 
+            window.currentLat = realLat;
+            window.currentLon = realLon;
+            
+            blueDot.setStyle({opacity: 1, fillOpacity: 1});
+            blueDot.setLatLng([realLat, realLon]);
+            if (circleArea) circleArea.setLatLng([realLat, realLon]);
+            
+            mapa.setView([realLat, realLon], 15);
+            loadNearbyReports(realLat, realLon, window.currentRadius);
+        });
+            // ===== GESTIÓN DE BÚSQUEDA, RECIENTES Y CIERRE DE BLUR =====
+    const searchInput = document.querySelector('#search-modal #search-input');
+    const searchResultsDiv = document.querySelector('#search-modal .search-results');
+    let searchTimeout;
+
+    const pinIconSvg = `<svg width="18" height="18" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
+    const clockIconSvg = `<svg width="18" height="18" fill="none" stroke="#ccc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 2"/></svg>`;
+
+    function escapeAttr(text) {
+        return String(text || '').replace(/"/g, '&quot;');
+    }
+
+    function getRecentSearches() {
+        const stored = localStorage.getItem('recentSearches');
+        if (stored === null) {
+            const initialRecents = [
+                { title: 'Carlos Valdovinos 450', subtitle: 'San Joaquín', lat: -33.4856, lon: -70.6258 },
+                { title: 'Departamental 1250', subtitle: 'San Joaquín', lat: -33.5015, lon: -70.6190 }
+            ];
+            localStorage.setItem('recentSearches', JSON.stringify(initialRecents));
+            return initialRecents;
+        }
+        try {
+            return JSON.parse(stored) || [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveRecentSearch(title, subtitle, lat, lon) {
+        let recents = getRecentSearches();
+        recents = recents.filter(item => item.title.toLowerCase() !== title.toLowerCase());
+        recents.unshift({ title, subtitle, lat, lon });
+        if (recents.length > 5) recents = recents.slice(0, 5);
+        localStorage.setItem('recentSearches', JSON.stringify(recents));
+    }
+
+        function clearAllRecentSearches() {
+        localStorage.setItem('recentSearches', JSON.stringify([]));
+        refreshSearchView();
+    }
+
+    function removeRecentSearch(index) {
+        const recents = getRecentSearches();
+        recents.splice(index, 1);
+        localStorage.setItem('recentSearches', JSON.stringify(recents));
+        refreshSearchView();
+    }
+
+    function refreshSearchView() {
+        if (!searchResultsDiv) return;
+        const currentQuery = searchInput ? searchInput.value.trim() : '';
+        if (currentQuery.length < 3) {
+            searchResultsDiv.innerHTML = buildRecentSectionHtml();
+        } else {
+            const recentWrapper = document.getElementById('recent-searches-wrapper');
+            if (recentWrapper) {
+                recentWrapper.outerHTML = buildRecentSectionHtml();
+            }
+        }
+    }
+
+    function buildRecentSectionHtml() {
+        const recents = getRecentSearches();
+        if (!recents.length) return '';
+
+        const itemsHtml = recents.map((item, index) => `
+            <div class="search-result-item" data-lat="${item.lat}" data-lon="${item.lon}" data-title="${escapeAttr(item.title)}" data-subtitle="${escapeAttr(item.subtitle)}">
+                <div class="search-icon-circle">${clockIconSvg}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="color: #fff; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</div>
+                    <div style="color: #888; font-size: 13px;">${item.subtitle}</div>
+                </div>
+                <button type="button" class="delete-recent-item-btn" data-index="${index}" title="Eliminar">×</button>
+            </div>
+        `).join('');
+
+        return `
+            <div id="recent-searches-wrapper">
+                <div class="search-section-title">
+                    <span>Recientes</span>
+                    <button type="button" class="clear-recents-btn" id="btn-clear-recents">Borrar</button>
+                </div>
+                <div class="search-group-card">${itemsHtml}</div>
+            </div>
+        `;
+    }
+
+
+    function selectLocation(lat, lon, title, subtitle) {
+        isArtificial = true;
+        seguirUsuario = false;
+        window.currentLat = lat;
+        window.currentLon = lon;
+
+        if (typeof blueDot !== 'undefined' && blueDot) {
+            blueDot.setStyle({ opacity: 0, fillOpacity: 0 });
+        }
+
+        if (typeof circleArea !== 'undefined' && circleArea) {
+            circleArea.setLatLng([lat, lon]);
+        } else if (typeof mapa !== 'undefined') {
+            circleArea = L.circle([lat, lon], {
+                color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
+            }).addTo(mapa);
+        }
+
+        if (typeof mapa !== 'undefined') {
+            mapa.setView([lat, lon], 15);
+        }
+        if (typeof loadNearbyReports === 'function') {
+            loadNearbyReports(lat, lon, window.currentRadius);
+        }
+
+        if (title) {
+            saveRecentSearch(title, subtitle || 'Santiago', lat, lon);
+        }
+
+        window.closeSearch();
+    }
+
+    window.seleccionarUbicacion = selectLocation;
+
+    // ===== CONTROLES DE BÚSQUEDA, UBICACIÓN Y VALIDACIÓN =====
+    const searchBtn = document.getElementById('btn-buscar');
+    const locationBtn = document.getElementById('btn-centrar');
+
+    let hasValidSearchResults = false;
+    let isSearchingLocation = false;
+    let locationFlashTimeout = null;
+
+    function isBottomPanelExpanded() {
+        const panel = document.getElementById('panel-inferior');
+        return panel ? panel.classList.contains('expanded-panel') : false;
+    }
+
+    function setLocationButtonActive(isActive) {
+        if (!locationBtn) return;
+        locationBtn.classList.toggle('on', isActive);
+        locationBtn.classList.toggle('map-control-active', isActive);
+    }
+
+    function flashLocationButton() {
+        if (!locationBtn) return;
+        clearTimeout(locationFlashTimeout);
+        setLocationButtonActive(true);
+        locationFlashTimeout = setTimeout(() => {
+            setLocationButtonActive(false);
+        }, 1000);
+    }
+
+    if (locationBtn) {
+        locationBtn.addEventListener('click', flashLocationButton);
+    }
+
+    function selectLocation(lat, lon, title, subtitle) {
+        isArtificial = true;
+        seguirUsuario = false;
+        window.currentLat = lat;
+        window.currentLon = lon;
+        setLocationButtonActive(false);
+
+        if (typeof blueDot !== 'undefined' && blueDot) {
+            blueDot.setStyle({ opacity: 0, fillOpacity: 0 });
+        }
+
+        if (typeof circleArea !== 'undefined' && circleArea) {
+            circleArea.setLatLng([lat, lon]);
+        } else if (typeof mapa !== 'undefined') {
+            circleArea = L.circle([lat, lon], {
+                color: '#3478f6', fillColor: '#3478f6', fillOpacity: 0.08, weight: 1, radius: window.currentRadius
+            }).addTo(mapa);
+        }
+
+        if (typeof mapa !== 'undefined') {
+            mapa.setView([lat, lon], 15);
+        }
+        if (typeof loadNearbyReports === 'function') {
+            loadNearbyReports(lat, lon, window.currentRadius);
+        }
+
+        if (title) {
+            saveRecentSearch(title, subtitle || 'Santiago', lat, lon);
+        }
+
+        window.closeSearch();
+    }
+
+    window.seleccionarUbicacion = selectLocation;
+
+    window.openSearch = function() {
+        if (isBottomPanelExpanded()) return;
+
+        if (typeof closeMenus === 'function') closeMenus();
+
+        const btnLeyenda = document.getElementById('btn-leyenda');
+        const popupLeyenda = document.getElementById('leyenda-popup');
+        if (btnLeyenda) btnLeyenda.classList.remove('on');
+        if (popupLeyenda) popupLeyenda.style.display = 'none';
+
+        const modal = document.getElementById('search-modal');
+        const overlay = document.getElementById('search-overlay');
+
+        hasValidSearchResults = false;
+        if (searchBtn) {
+            searchBtn.classList.add('on', 'map-control-active');
+        }
+        if (searchInput) searchInput.value = '';
+        if (searchResultsDiv) searchResultsDiv.innerHTML = buildRecentSectionHtml();
+
+        if (modal) modal.classList.add('show');
+        if (overlay) overlay.classList.add('show');
+        if (searchInput) setTimeout(() => searchInput.focus(), 200);
+    };
+
+    window.closeSearch = function() {
+        const modal = document.getElementById('search-modal');
+        if (modal) modal.classList.remove('show');
+
+        if (searchBtn) {
+            searchBtn.classList.remove('on', 'map-control-active');
+        }
+        hasValidSearchResults = false;
+
+        document.querySelectorAll('#search-overlay, #filters-overlay, .search-blur-overlay, .blur-overlay').forEach(el => {
+            el.classList.remove('show');
+        });
+
+        if (searchInput) {
+            searchInput.blur();
+            searchInput.value = '';
+        }
+    };
+
+    if (searchResultsDiv) {
+        searchResultsDiv.addEventListener('click', function(e) {
+            if (e.target.closest('#btn-clear-recents')) {
+                e.stopPropagation();
+                clearAllRecentSearches();
+                return;
+            }
+
+            const deleteBtn = e.target.closest('.delete-recent-item-btn');
+            if (deleteBtn) {
+                e.stopPropagation();
+                const index = parseInt(deleteBtn.dataset.index, 10);
+                removeRecentSearch(index);
+                return;
+            }
+
+            const item = e.target.closest('.search-result-item');
+            if (!item) return;
+            selectLocation(
+                parseFloat(item.dataset.lat),
+                parseFloat(item.dataset.lon),
+                item.dataset.title,
+                item.dataset.subtitle
+            );
+        });
+    }
+
+        if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            hasValidSearchResults = false;
+
+            if (query.length < 3) {
+                isSearchingLocation = false;
+                searchResultsDiv.innerHTML = buildRecentSectionHtml();
+                return;
+            }
+
+            clearTimeout(searchTimeout);
+            isSearchingLocation = true;
+
+            // Bounding box de Gran Santiago (oeste, norte, este, sur)
+            const santiagoViewbox = '-70.88,-33.30,-70.48,-33.66';
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&countrycodes=cl&viewbox=${santiagoViewbox}&bounded=1&q=${encodeURIComponent(query)}&limit=4`;
+
+            searchTimeout = setTimeout(() => {
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        isSearchingLocation = false;
+                        let html = '';
+
+                        // Descarta coincidencias genéricas a nivel de ciudad/región si no se buscó "Santiago"
+                        const validPlaces = (Array.isArray(data) ? data : []).filter(place => {
+                            const isGenericBoundary = place.class === 'boundary' && place.type === 'administrative';
+                            if (isGenericBoundary && !query.toLowerCase().includes('santiago')) {
+                                return false;
+                            }
+                            return true;
+                        });
+
+                        if (validPlaces.length > 0) {
+                            hasValidSearchResults = true;
+                            const suggestionsHtml = validPlaces.map(place => {
+                                const addr = place.address || {};
+                                const road = addr.road || addr.pedestrian || place.name || place.display_name.split(',')[0].trim();
+                                const shortName = (addr.road && addr.house_number) ? `${addr.road} ${addr.house_number}` : road;
+                                const commune = addr.suburb || addr.city_district || addr.town || addr.city || addr.municipality || (place.display_name.split(',')[1] || 'Santiago').trim();
+
+                                return `
+                                    <div class="search-result-item suggestion-item" data-lat="${place.lat}" data-lon="${place.lon}" data-title="${escapeAttr(shortName)}" data-subtitle="${escapeAttr(commune)}">
+                                        <div class="search-icon-circle">${pinIconSvg}</div>
+                                        <div>
+                                            <div style="color: #fff; font-size: 15px; font-weight: 500;">${shortName}</div>
+                                            <div style="color: #888; font-size: 13px;">${commune}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+
+                            html += `
+                                <div class="search-section-title">Sugerencias</div>
+                                <div class="search-group-card">${suggestionsHtml}</div>
+                            `;
+                        } else {
+                            hasValidSearchResults = false;
+                            html += `<div class="search-not-found-msg">Ubicación inexistente, intente otra</div>`;
+                        }
+
+                        html += buildRecentSectionHtml();
+                        searchResultsDiv.innerHTML = html;
+                    })
+                    .catch(err => {
+                        isSearchingLocation = false;
+                        hasValidSearchResults = false;
+                        console.error('Error en API:', err);
+                        searchResultsDiv.innerHTML = `<div class="search-not-found-msg">No se pudo verificar la dirección, intente nuevamente</div>` + buildRecentSectionHtml();
+                    });
+            }, 400);
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (isSearchingLocation || !hasValidSearchResults) return;
+
+                const firstSuggestion = searchResultsDiv.querySelector('.suggestion-item');
+                if (firstSuggestion) firstSuggestion.click();
+            }
+        });
+    }
+    
+
         // Ubi para pruebas
         //Descomentar para hacer pruebas
         /*
@@ -798,6 +1765,7 @@
         loadNearbyReports(latPrueba, lonPrueba, searchRadius);
         */
 
+        setTimeout(function() { mapa.invalidateSize(); }, 100);
         setTimeout(function() { mapa.invalidateSize(); }, 100);
 
 
@@ -838,10 +1806,13 @@
         if (btnLeyenda) {
             btnLeyenda.addEventListener('click', function(e) {
                 e.preventDefault();
+                const panel = document.getElementById('panel-inferior');
+                if (panel.classList.contains('expanded-panel')){
+                    return;
+                }
                 btnLeyenda.classList.toggle('on');
-                
                 if (popupLeyenda.style.display === 'none' || popupLeyenda.style.display === '') {
-                    popupLeyenda.style.display = 'flex';
+                    popupLeyenda.style.display = 'flex' ;
                 } else {
                     popupLeyenda.style.display = 'none';
                 }

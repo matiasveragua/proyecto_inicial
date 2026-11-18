@@ -45,18 +45,12 @@
 
     .aviso { background: rgba(217, 48, 37, .12); color: #d93025; border-radius: 12px; padding: 11px 14px; font-size: 13.5px; margin: 0; }
 
-    /* Estilo de boton para la municipalidad */
-    
-.btn-extra-m {position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--amarillo-vial); background: transparent; color: var(--amarillo-vial); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;}
-
 </style>
 
 <!-- parte superior -->
 
 <div class="hero">
 
-    <!-- Botón M para la municipalidad -->
-    <button class="btn-extra-m" id="btnExtraM" type="button" onclick="verificarClave(event)">M</button>
 
     <div class="inner">
 
@@ -169,25 +163,6 @@
         }
     });
 
-    // Redireccionamiento del botón M al panel municipal
-    document.getElementById('btnExtraM').addEventListener('click', function() {
-        window.location.href = "{% url 'panel_municipal' %}";
-    });
-
-function verificarClave(evento) {
-    evento.preventDefault(); // Evita que el botón haga su acción por defecto
-    evento.stopImmediatePropagation();
-    
-    let clave = prompt("Ingrese la contraseña de acceso municipal:");
-    
-    if (clave === "Municipalidad") {
-        window.location.href = "{% url 'panel_municipal' %}"; 
-    } else if (clave !== null) {
-        alert("Contraseña incorrecta. Acceso denegado.");
-    }
-    
-    return false;
-}
 </script>
 
 {% endblock contenido %}
